@@ -1,0 +1,78 @@
+{% extends 'base.html' %}
+
+{% block title %}User Management - System Admin{% endblock %}
+
+{% block content %}
+<div class="row align-items-center mb-4">
+    <div class="col-md-7">
+        <h2 class="page-title text-navy"><i class="bi bi-people text-primary me-2"></i> EV User Accounts</h2>
+        <p class="page-subtitle">View and manage registered EV drivers in the system.</p>
+    </div>
+</div>
+
+<!-- Search Bar -->
+<div class="card shadow-sm border mb-4">
+    <div class="card-body p-3">
+        <form method="get" class="row g-2">
+            <div class="col-md-9">
+                <input type="text" name="q" class="form-control" placeholder="Search by name, email, or username..." value="{{ query }}">
+            </div>
+            <div class="col-md-3 d-grid">
+                <button type="submit" class="btn btn-ev-primary">Search Users</button>
+            </div>
+        </form>
+    </div>
+</div>
+
+<div class="card shadow-sm border">
+    <div class="card-body p-0">
+        <div class="table-responsive">
+            <table class="table table-hover mb-0">
+                <thead>
+                    <tr>
+                        <th>User</th>
+                        <th>Email</th>
+                        <th>Phone</th>
+                        <th>Registered EVs</th>
+                        <th>Total Bookings</th>
+                        <th>Joined Date</th>
+                        <th>Status</th>
+                        <th>Action</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for u in users %}
+                        <tr>
+                            <td>
+                                <div class="fw-bold text-dark">{{ u.get_full_name|default:u.username }}</div>
+                                <div class="small text-muted">@{{ u.username }}</div>
+                            </td>
+                            <td>{{ u.email }}</td>
+                            <td>{{ u.phone|default:'N/A' }}</td>
+                            <td><span class="badge bg-light text-dark border">{{ u.vehicles.count }}</span></td>
+                            <td><span class="badge bg-light text-dark border">{{ u.bookings.count }}</span></td>
+                            <td class="small text-muted">{{ u.date_joined|date:"M d, Y" }}</td>
+                            <td>
+                                {% if u.is_active %}
+                                    <span class="badge bg-success">Active</span>
+                                {% else %}
+                                    <span class="badge bg-danger">Deactivated</span>
+                                {% endif %}
+                            </td>
+                            <td>
+                                <a href="{% url 'admin_user_toggle' u.id %}" class="btn btn-sm {% if u.is_active %}btn-outline-danger{% else %}btn-outline-success{% endif %} py-1 px-2" onclick="return confirm('Toggle status for this user?')">
+                                    {% if u.is_active %}Deactivate{% else %}Activate{% endif %}
+                                </a>
+                            </td>
+                        </tr>
+                    {% empty %}
+                        <tr>
+                            <td colspan="8" class="text-center py-4 text-muted">No users found matching your query.</td>
+                        </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+    </div>
+</div>
+{% endblock %}

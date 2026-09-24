@@ -1,0 +1,84 @@
+{% extends 'base.html' %}
+
+{% block title %}Station Management - System Admin{% endblock %}
+
+{% block content %}
+<div class="row align-items-center mb-4">
+    <div class="col-md-7">
+        <h2 class="page-title text-navy"><i class="bi bi-ev-station text-success me-2"></i> Charging Stations Directory</h2>
+        <p class="page-subtitle">Configure charging station facilities, GPS coordinates, and operating parameters.</p>
+    </div>
+    <div class="col-md-5 text-md-end">
+        <a href="{% url 'admin_station_create' %}" class="btn btn-ev-primary">
+            <i class="bi bi-plus-lg me-1"></i> Add Charging Station
+        </a>
+    </div>
+</div>
+
+<div class="card shadow-sm border">
+    <div class="card-body p-0">
+        <div class="table-responsive">
+            <table class="table table-hover mb-0">
+                <thead>
+                    <tr>
+                        <th>Station Name</th>
+                        <th>City</th>
+                        <th>Coordinates</th>
+                        <th>Charging Points</th>
+                        <th>Hours</th>
+                        <th>Status</th>
+                        <th>Assigned Operators</th>
+                        <th>Actions</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for s in stations %}
+                        <tr>
+                            <td>
+                                <div class="fw-bold text-navy">{{ s.name }}</div>
+                                <div class="small text-muted">{{ s.address }}</div>
+                            </td>
+                            <td>{{ s.city }}</td>
+                            <td><code class="small">{{ s.latitude|floatformat:4 }}, {{ s.longitude|floatformat:4 }}</code></td>
+                            <td>
+                                <span class="badge bg-light text-dark border">{{ s.points.count }} Slots</span>
+                                <div class="small text-success">{{ s.available_points }} Free</div>
+                            </td>
+                            <td>{{ s.operating_hours }}</td>
+                            <td>
+                                <span class="badge {% if s.status == 'ACTIVE' %}bg-success{% elif s.status == 'MAINTENANCE' %}bg-warning text-dark{% else %}bg-secondary{% endif %}">
+                                    {{ s.get_status_display }}
+                                </span>
+                            </td>
+                            <td>
+                                {% for op in s.assigned_operators.all %}
+                                    <span class="badge bg-primary me-1">{{ op.user.username }}</span>
+                                {% empty %}
+                                    <span class="small text-muted">Unassigned</span>
+                                {% endfor %}
+                            </td>
+                            <td>
+                                <div class="btn-group btn-group-sm">
+                                    <a href="{% url 'admin_station_edit' s.id %}" class="btn btn-outline-secondary" title="Edit Station">
+                                        <i class="bi bi-pencil"></i>
+                                    </a>
+                                    <a href="{% url 'admin_points' %}?station={{ s.id }}" class="btn btn-outline-primary" title="Manage Charging Points">
+                                        <i class="bi bi-plug"></i>
+                                    </a>
+                                    <a href="{% url 'admin_station_delete' s.id %}" class="btn btn-outline-danger" title="Delete Station">
+                                        <i class="bi bi-trash"></i>
+                                    </a>
+                                </div>
+                            </td>
+                        </tr>
+                    {% empty %}
+                        <tr>
+                            <td colspan="8" class="text-center py-4 text-muted">No charging stations registered yet.</td>
+                        </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+    </div>
+</div>
+{% endblock %}

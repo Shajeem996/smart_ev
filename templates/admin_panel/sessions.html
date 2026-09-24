@@ -1,0 +1,67 @@
+{% extends 'base.html' %}
+
+{% block title %}All Charging Sessions - System Admin{% endblock %}
+
+{% block content %}
+<div class="row align-items-center mb-4">
+    <div class="col-md-7">
+        <h2 class="page-title text-navy"><i class="bi bi-battery-charging text-primary me-2"></i> System Charging Sessions</h2>
+        <p class="page-subtitle">Complete ledger of simulated charging sessions, power delivery, and duration across all stations.</p>
+    </div>
+</div>
+
+<div class="card shadow-sm border">
+    <div class="card-body p-0">
+        <div class="table-responsive">
+            <table class="table table-hover mb-0">
+                <thead>
+                    <tr>
+                        <th>Booking ID</th>
+                        <th>Station</th>
+                        <th>Slot</th>
+                        <th>Driver</th>
+                        <th>Operator</th>
+                        <th>Started At</th>
+                        <th>Ended At</th>
+                        <th>Energy Delivered</th>
+                        <th>Status</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for s in sessions %}
+                        <tr>
+                            <td class="fw-bold text-navy">#{{ s.booking.booking_id }}</td>
+                            <td>{{ s.booking.station.name }}</td>
+                            <td>{{ s.booking.charging_point.point_number }}</td>
+                            <td>{{ s.booking.user.get_full_name|default:s.booking.user.username }}</td>
+                            <td>{{ s.operator.username|default:'Station Operator' }}</td>
+                            <td>{{ s.started_at|date:"M d, h:i A" }}</td>
+                            <td>
+                                {% if s.ended_at %}
+                                    {{ s.ended_at|date:"M d, h:i A" }}
+                                {% else %}
+                                    <span class="text-primary fw-semibold"><i class="bi bi-stopwatch"></i> In Progress</span>
+                                {% endif %}
+                            </td>
+                            <td>
+                                <span class="badge bg-success bg-opacity-10 text-success fw-bold">
+                                    {{ s.energy_delivered_kwh }} kWh
+                                </span>
+                            </td>
+                            <td>
+                                <span class="badge {% if s.status == 'IN_PROGRESS' %}badge-charging{% elif s.status == 'COMPLETED' %}badge-available{% else %}badge-finishing{% endif %}">
+                                    {{ s.get_status_display }}
+                                </span>
+                            </td>
+                        </tr>
+                    {% empty %}
+                        <tr>
+                            <td colspan="9" class="text-center py-4 text-muted">No charging sessions recorded yet.</td>
+                        </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+    </div>
+</div>
+{% endblock %}

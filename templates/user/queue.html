@@ -1,0 +1,132 @@
+{% extends 'base.html' %}
+
+{% block title %}Waiting Queue - Smart EVCharge{% endblock %}
+
+{% block content %}
+<div class="row align-items-center mb-4">
+    <div class="col-md-7">
+        <h2 class="page-title text-navy"><i class="bi bi-hourglass-split text-warning me-2"></i> Smart Waiting Queue</h2>
+        <p class="page-subtitle">Priority-based virtual queue when charging stations are running at 100% capacity.</p>
+    </div>
+    <div class="col-md-5 text-md-end">
+        <a href="{% url 'join_queue' %}" class="btn btn-warning text-dark fw-bold">
+            <i class="bi bi-plus-circle me-1"></i> Join a Station Queue
+        </a>
+    </div>
+</div>
+
+<!-- Active Queue Spots -->
+<div class="card shadow-sm border mb-4">
+    <div class="card-header bg-white py-3">
+        <h5 class="mb-0 fw-bold text-navy"><i class="bi bi-broadcast text-primary me-2"></i> Active Queue Registrations</h5>
+    </div>
+    <div class="card-body p-0">
+        <div class="table-responsive">
+            <table class="table table-hover mb-0">
+                <thead>
+                    <tr>
+                        <th>Queue Position</th>
+                        <th>Charging Station</th>
+                        <th>Registered EV</th>
+                        <th>Target Time</th>
+                        <th>Connector</th>
+                        <th>Status</th>
+                        <th>Action</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for q in active_queues %}
+                        <tr>
+                            <td>
+                                <span class="badge bg-warning text-dark fs-6 px-3 py-2 fw-bold">
+                                    #{{ q.queue_position }} in Line
+                                </span>
+                            </td>
+                            <td>
+                                <div class="fw-bold text-dark">{{ q.station.name }}</div>
+                                <div class="small text-muted">{{ q.station.city }}</div>
+                            </td>
+                            <td>{{ q.vehicle.model }} ({{ q.vehicle.vehicle_number }})</td>
+                            <td>
+                                <div>{{ q.requested_date }}</div>
+                                <div class="small text-muted">{{ q.requested_time|time:"h:i A" }} ({{ q.duration_minutes }}m)</div>
+                            </td>
+                            <td><span class="badge bg-secondary">{{ q.preferred_connector }}</span></td>
+                            <td>
+                                {% if q.status == 'NOTIFIED' %}
+                                    <span class="badge bg-success p-2">
+                                        <i class="bi bi-bell-fill me-1"></i> SLOT READY!
+                                    </span>
+                                {% else %}
+                                    <span class="badge bg-warning text-dark p-2">
+                                        <i class="bi bi-clock me-1"></i> WAITING
+                                    </span>
+                                {% endif %}
+                            </td>
+                            <td>
+                                {% if q.status == 'NOTIFIED' %}
+                                    <a href="{% url 'book_slot' %}?station={{ q.station.id }}&queue_id={{ q.id }}" class="btn btn-sm btn-success fw-bold">
+                                        Claim Slot &rarr;
+                                    </a>
+                                {% else %}
+                                    <a href="{% url 'cancel_queue' q.id %}" class="btn btn-sm btn-outline-danger" onclick="return confirm('Leave waiting queue?')">
+                                        Leave Queue
+                                    </a>
+                                {% endif %}
+                            </td>
+                        </tr>
+                    {% empty %}
+                        <tr>
+                            <td colspan="7" class="text-center py-4 text-muted">
+                                You are not currently queued at any charging station.
+                                <div class="mt-2">
+                                    <a href="{% url 'join_queue' %}" class="btn btn-sm btn-outline-warning text-dark">Join Queue for Full Stations</a>
+                                </div>
+                            </td>
+                        </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+    </div>
+</div>
+
+<!-- Past Queue History -->
+{% if past_queues %}
+<div class="card shadow-sm border">
+    <div class="card-header bg-white py-3">
+        <h6 class="mb-0 fw-bold text-muted"><i class="bi bi-clock-history me-2"></i> Queue History</h6>
+    </div>
+    <div class="card-body p-0">
+        <div class="table-responsive">
+            <table class="table table-hover mb-0">
+                <thead>
+                    <tr>
+                        <th>Station</th>
+                        <th>Vehicle</th>
+                        <th>Requested Date</th>
+                        <th>Created At</th>
+                        <th>Final Status</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for pq in past_queues %}
+                        <tr>
+                            <td>{{ pq.station.name }}</td>
+                            <td>{{ pq.vehicle.model }}</td>
+                            <td>{{ pq.requested_date }} {{ pq.requested_time|time:"h:i A" }}</td>
+                            <td class="small text-muted">{{ pq.created_at|date:"M d, Y h:i A" }}</td>
+                            <td>
+                                <span class="badge {% if pq.status == 'ASSIGNED' %}bg-success{% elif pq.status == 'CANCELLED' %}bg-secondary{% else %}bg-info{% endif %}">
+                                    {{ pq.get_status_display }}
+                                </span>
+                            </td>
+                        </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+    </div>
+</div>
+{% endif %}
+{% endblock %}

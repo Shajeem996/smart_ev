@@ -1,0 +1,57 @@
+{% extends 'base.html' %}
+
+{% block title %}Notifications - Smart EVCharge{% endblock %}
+
+{% block content %}
+<div class="row align-items-center mb-4">
+    <div class="col-md-7">
+        <h2 class="page-title text-navy"><i class="bi bi-bell text-warning me-2"></i> In-App Alerts &amp; Notifications</h2>
+        <p class="page-subtitle">Status updates regarding your slot bookings, queue advances, and charging sessions.</p>
+    </div>
+    <div class="col-md-5 text-md-end">
+        <a href="{% url 'mark_all_read' %}" class="btn btn-outline-secondary btn-sm">
+            <i class="bi bi-check2-all me-1"></i> Mark All as Read
+        </a>
+    </div>
+</div>
+
+<div class="card shadow-sm border">
+    <div class="card-body p-0">
+        <div class="list-group list-group-flush">
+            {% for n in notifications %}
+                <div class="list-group-item p-4 border-bottom {% if not n.is_read %}bg-light border-start border-primary border-4{% endif %}">
+                    <div class="d-flex justify-content-between align-items-start mb-1">
+                        <div>
+                            <span class="badge {% if n.notification_type == 'BOOKING' %}bg-primary{% elif n.notification_type == 'QUEUE' %}bg-warning text-dark{% elif n.notification_type == 'CHARGING' %}bg-success{% else %}bg-secondary{% endif %} me-2">
+                                {{ n.get_notification_type_display }}
+                            </span>
+                            <strong class="text-navy fs-6">{{ n.title }}</strong>
+                        </div>
+                        <span class="text-muted small">{{ n.created_at|date:"M d, Y h:i A" }}</span>
+                    </div>
+                    <p class="mb-2 text-dark small mt-2">{{ n.message }}</p>
+
+                    <div class="d-flex gap-2 align-items-center">
+                        {% if n.link %}
+                            <a href="{% url 'mark_notification_read' n.id %}" class="btn btn-sm btn-ev-primary py-1 px-3">
+                                View Details &rarr;
+                            </a>
+                        {% endif %}
+                        {% if not n.is_read %}
+                            <a href="{% url 'mark_notification_read' n.id %}" class="btn btn-sm btn-link text-muted text-decoration-none py-1">
+                                Mark as read
+                            </a>
+                        {% endif %}
+                    </div>
+                </div>
+            {% empty %}
+                <div class="text-center py-5 text-muted">
+                    <div class="fs-1 text-muted mb-2"><i class="bi bi-bell-slash"></i></div>
+                    <h5>No notifications</h5>
+                    <p class="small text-muted">You have no alerts at this time.</p>
+                </div>
+            {% endfor %}
+        </div>
+    </div>
+</div>
+{% endblock %}

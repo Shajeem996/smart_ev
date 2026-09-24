@@ -1,0 +1,46 @@
+{% extends 'base.html' %}
+{% load static %}
+
+{% block title %}Live Charging Map - Smart EVCharge{% endblock %}
+
+{% block content %}
+<div class="row align-items-center mb-3">
+    <div class="col-md-6">
+        <h2 class="page-title"><i class="bi bi-map-fill text-success me-2"></i> Live Interactive Station Map</h2>
+        <p class="page-subtitle">Real-time availability of EV charging stations powered by OpenStreetMap &amp; Leaflet</p>
+    </div>
+    <div class="col-md-6 text-md-end">
+        <a href="{% url 'stations_list' %}" class="btn btn-outline-secondary me-2">
+            <i class="bi bi-list-ul me-1"></i> View Station List
+        </a>
+        {% if user.is_authenticated and user.role == 'USER' %}
+            <a href="{% url 'book_slot' %}" class="btn btn-ev-primary">
+                <i class="bi bi-calendar-plus me-1"></i> Book Slot
+            </a>
+        {% endif %}
+    </div>
+</div>
+
+<!-- Map Legend & Filters Card -->
+<div class="card shadow-sm border mb-3">
+    <div class="card-body py-2 px-3 d-flex flex-wrap justify-content-between align-items-center">
+        <div class="d-flex align-items-center gap-3 py-1">
+            <span class="small fw-bold text-muted text-uppercase">Map Legend:</span>
+            <span class="small"><span class="badge bg-success me-1">⚡ Green</span> Slots Available</span>
+            <span class="small"><span class="badge bg-secondary me-1">⚡ Gray</span> Fully Booked / Busy</span>
+        </div>
+        <div class="text-muted small py-1">
+            <i class="bi bi-info-circle me-1"></i> Click on any charging marker to view details and reserve an instant slot.
+        </div>
+    </div>
+</div>
+
+<!-- Leaflet Map Container -->
+<div class="card shadow-sm border p-1">
+    <div id="map"></div>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script src="{% static 'js/map.js' %}"></script>
+{% endblock %}

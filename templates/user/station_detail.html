@@ -1,0 +1,147 @@
+{% extends 'base.html' %}
+
+{% block title %}{{ station.name }} - Smart EVCharge{% endblock %}
+
+{% block content %}
+<div class="mb-4">
+    <a href="{% url 'stations_list' %}" class="small text-decoration-none text-muted mb-2 d-inline-block">
+        &larr; Back to Stations
+    </a>
+    <div class="row align-items-center">
+        <div class="col-md-8">
+            <h2 class="page-title text-navy">{{ station.name }}</h2>
+            <p class="page-subtitle">
+                <i class="bi bi-geo-alt text-danger me-1"></i> {{ station.address }}, {{ station.city }} &bull; 
+                <span class="badge {% if station.status == 'ACTIVE' %}bg-success{% else %}bg-secondary{% endif %}">{{ station.get_status_display }}</span>
+            </p>
+        </div>
+        <div class="col-md-4 text-md-end">
+            <a href="{% url 'book_slot' %}?station={{ station.id }}" class="btn btn-ev-primary">
+                <i class="bi bi-calendar-plus me-1"></i> Reserve a Charging Slot
+            </a>
+            <a href="{% url 'join_queue' %}?station={{ station.id }}" class="btn btn-outline-warning ms-1 text-dark">
+                <i class="bi bi-hourglass-split me-1"></i> Join Queue
+            </a>
+        </div>
+    </div>
+</div>
+
+<div class="row g-4 mb-4">
+    <!-- Station Details Summary -->
+    <div class="col-md-4">
+        <div class="card shadow-sm border h-100">
+            <div class="card-header fw-bold">
+                <i class="bi bi-info-circle me-1 text-primary"></i> Station Overview
+            </div>
+            <div class="card-body">
+                <ul class="list-unstyled mb-4" style="line-height: 2;">
+                    <li><strong>City:</strong> {{ station.city }}</li>
+                    <li><strong>Operating Hours:</strong> {{ station.operating_hours }}</li>
+                    <li><strong>Contact:</strong> {{ station.contact }}</li>
+                    <li><strong>Coordinates:</strong> {{ station.latitude }}, {{ station.longitude }}</li>
+                </ul>
+
+                {% if station.description %}
+                    <h6 class="fw-bold mb-1">About Station &amp; Amenities</h6>
+                    <p class="small text-muted mb-3">{{ station.description }}</p>
+                {% endif %}
+
+                <div class="p-3 bg-light rounded border">
+                    <div class="fw-bold small mb-2 text-dark">Current Station Load:</div>
+                    <div class="d-flex justify-content-between small text-muted mb-1">
+                        <span>Available:</span> <strong class="text-success">{{ station.available_points }}</strong>
+                    </div>
+                    <div class="d-flex justify-content-between small text-muted mb-1">
+                        <span>Reserved:</span> <strong class="text-warning">{{ station.reserved_points }}</strong>
+                    </div>
+                    <div class="d-flex justify-content-between small text-muted mb-1">
+                        <span>Charging:</span> <strong class="text-primary">{{ station.charging_points }}</strong>
+                    </div>
+                    <div class="d-flex justify-content-between small text-muted mb-1">
+                        <span>Finishing:</span> <strong class="text-orange" style="color: #ea580c;">{{ station.finishing_points }}</strong>
+                    </div>
+                    <div class="d-flex justify-content-between small text-muted">
+                        <span>Out of Service:</span> <strong class="text-secondary">{{ station.out_of_service_points }}</strong>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Live Charging Points Grid -->
+    <div class="col-md-8">
+        <div class="card shadow-sm border h-100">
+            <div class="card-header d-flex justify-content-between align-items-center">
+                <h5 class="mb-0 fw-bold"><i class="bi bi-plug text-success me-2"></i> Real-time Charging Points (Slots)</h5>
+                <span class="badge bg-light text-dark border">{{ points.count }} Configured Slots</span>
+            </div>
+            <div class="card-body p-0">
+                <div class="table-responsive">
+                    <table class="table table-hover mb-0">
+                        <thead>
+                            <tr>
+                                <th>Point / Slot</th>
+                                <th>Connector Type</th>
+                                <th>Power Rating</th>
+                                <th>Speed Category</th>
+                                <th>Live Status</th>
+                                <th>Action</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            {% for p in points %}
+                                <tr>
+                                    <td class="fw-bold text-navy">{{ p.point_number }}</td>
+                                    <td><span class="badge bg-secondary">{{ p.get_connector_type_display }}</span></td>
+                                    <td>{{ p.power_rating }} kW</td>
+                                    <td class="small text-muted">{{ p.get_charging_speed_display }}</td>
+                                    <td>
+                                        {% if p.status == 'AVAILABLE' %}
+                                            <span class="badge-status badge-available">
+                                                <span class="pulse-dot pulse-available"></span> AVAILABLE
+                                            </span>
+                                        {% elif p.status == 'RESERVED' %}
+                                            <span class="badge-status badge-reserved">
+                                                <span class="pulse-dot pulse-reserved"></span> RESERVED
+                                            </span>
+                                        {% elif p.status == 'CHARGING' %}
+                                            <span class="badge-status badge-charging">
+                                                <span class="pulse-dot pulse-charging"></span> CHARGING
+                                            </span>
+                                        {% elif p.status == 'FINISHING' %}
+                                            <span class="badge-status badge-finishing">
+                                                <span class="pulse-dot" style="background-color: #ea580c;"></span> FINISHING
+                                            </span>
+                                        {% else %}
+                                            <span class="badge-status badge-out-of-service">
+                                                <span class="pulse-dot" style="background-color: #64748b;"></span> OUT OF SERVICE
+                                            </span>
+                                        {% endif %}
+                                    </td>
+                                    <td>
+                                        {% if p.status == 'AVAILABLE' %}
+                                            <a href="{% url 'book_slot' %}?station={{ station.id }}&point={{ p.id }}" class="btn btn-sm btn-ev-primary py-1 px-2">
+                                                Book Slot
+                                            </a>
+                                        {% else %}
+                                            <a href="{% url 'join_queue' %}?station={{ station.id }}" class="btn btn-sm btn-outline-warning text-dark py-1 px-2">
+                                                Join Queue
+                                            </a>
+                                        {% endif %}
+                                    </td>
+                                </tr>
+                            {% empty %}
+                                <tr>
+                                    <td colspan="6" class="text-center py-4 text-muted">
+                                        No charging points configured at this station yet.
+                                    </td>
+                                </tr>
+                            {% endfor %}
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

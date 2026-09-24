@@ -1,0 +1,69 @@
+{% extends 'base.html' %}
+
+{% block title %}My Vehicles - Smart EVCharge{% endblock %}
+
+{% block content %}
+<div class="row align-items-center mb-4">
+    <div class="col-md-7">
+        <h2 class="page-title text-navy"><i class="bi bi-car-front text-success me-2"></i> My Electric Vehicles</h2>
+        <p class="page-subtitle">Add and configure your EV models to streamline slot booking with connector matching.</p>
+    </div>
+    <div class="col-md-5 text-md-end">
+        <a href="{% url 'vehicle_add' %}" class="btn btn-ev-primary">
+            <i class="bi bi-plus-lg me-1"></i> Add New Vehicle
+        </a>
+    </div>
+</div>
+
+<div class="row g-4">
+    {% for v in vehicles %}
+        <div class="col-md-6 col-lg-4">
+            <div class="card shadow-sm border h-100">
+                <div class="card-body p-4">
+                    <div class="d-flex justify-content-between align-items-start mb-2">
+                        <div>
+                            <h5 class="fw-bold text-navy mb-0">{{ v.model }}</h5>
+                            {% if v.nickname %}
+                                <span class="badge bg-light text-muted border mt-1">{{ v.nickname }}</span>
+                            {% endif %}
+                        </div>
+                        <span class="badge bg-success bg-opacity-10 text-success fw-bold">Active EV</span>
+                    </div>
+
+                    <p class="h6 text-primary fw-bold mb-3">{{ v.vehicle_number }}</p>
+
+                    <div class="p-3 bg-light rounded border mb-3">
+                        <div class="d-flex justify-content-between small text-muted mb-1">
+                            <span>Connector Port:</span>
+                            <strong class="text-dark">{{ v.get_connector_type_display }}</strong>
+                        </div>
+                        <div class="d-flex justify-content-between small text-muted">
+                            <span>Battery Capacity:</span>
+                            <strong class="text-dark">{{ v.battery_capacity }} kWh</strong>
+                        </div>
+                    </div>
+
+                    <div class="d-flex justify-content-between align-items-center pt-2">
+                        <span class="small text-muted">Added {{ v.created_at|date:"M d, Y" }}</span>
+                        <div class="btn-group btn-group-sm">
+                            <a href="{% url 'vehicle_edit' v.id %}" class="btn btn-outline-secondary" title="Edit Vehicle">
+                                <i class="bi bi-pencil"></i> Edit
+                            </a>
+                            <a href="{% url 'vehicle_delete' v.id %}" class="btn btn-outline-danger" title="Delete Vehicle">
+                                <i class="bi bi-trash"></i>
+                            </a>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    {% empty %}
+        <div class="col-12 text-center py-5">
+            <div class="fs-1 text-muted mb-2"><i class="bi bi-car-front"></i></div>
+            <h5 class="fw-bold">No vehicles registered yet</h5>
+            <p class="text-muted small">Register your vehicle number, model, and connector type to start booking slots.</p>
+            <a href="{% url 'vehicle_add' %}" class="btn btn-ev-primary">Add Your First EV</a>
+        </div>
+    {% endfor %}
+</div>
+{% endblock %}

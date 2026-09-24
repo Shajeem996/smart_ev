@@ -1,0 +1,273 @@
+{% extends 'base.html' %}
+
+{% block title %}System Admin Dashboard - Smart EVCharge{% endblock %}
+
+{% block content %}
+<div class="row align-items-center mb-4">
+    <div class="col-md-7">
+        <h2 class="page-title text-navy"><i class="bi bi-shield-lock-fill text-danger me-2"></i> System Administrator Control Center</h2>
+        <p class="page-subtitle">Centralized infrastructure monitoring, operator delegation, and capacity management.</p>
+    </div>
+    <div class="col-md-5 text-md-end">
+        <a href="{% url 'admin_station_create' %}" class="btn btn-navy me-2">
+            <i class="bi bi-plus-lg me-1"></i> Add Station
+        </a>
+        <a href="{% url 'admin_operator_create' %}" class="btn btn-ev-primary">
+            <i class="bi bi-person-plus me-1"></i> Add Operator
+        </a>
+    </div>
+</div>
+
+<!-- Primary System KPI Counters -->
+<div class="row g-3 mb-4">
+    <div class="col-md-3 col-sm-6">
+        <div class="card stat-card shadow-sm h-100">
+            <div class="d-flex justify-content-between align-items-center">
+                <div>
+                    <div class="stat-label">Total EV Users</div>
+                    <div class="stat-value text-navy">{{ total_users }}</div>
+                    <div class="small text-muted mt-1">Registered drivers</div>
+                </div>
+                <div class="fs-1 text-primary bg-primary bg-opacity-10 p-3 rounded-circle">
+                    <i class="bi bi-people-fill"></i>
+                </div>
+            </div>
+            <div class="mt-3 pt-2 border-top">
+                <a href="{% url 'admin_users' %}" class="small text-decoration-none fw-semibold text-primary">Manage Users &rarr;</a>
+            </div>
+        </div>
+    </div>
+
+    <div class="col-md-3 col-sm-6">
+        <div class="card stat-card shadow-sm h-100">
+            <div class="d-flex justify-content-between align-items-center">
+                <div>
+                    <div class="stat-label">Charging Stations</div>
+                    <div class="stat-value text-navy">{{ total_stations }}</div>
+                    <div class="small text-muted mt-1">Active metro hubs</div>
+                </div>
+                <div class="fs-1 text-success bg-success bg-opacity-10 p-3 rounded-circle">
+                    <i class="bi bi-ev-station-fill"></i>
+                </div>
+            </div>
+            <div class="mt-3 pt-2 border-top">
+                <a href="{% url 'admin_stations' %}" class="small text-decoration-none fw-semibold text-success">Manage Stations &rarr;</a>
+            </div>
+        </div>
+    </div>
+
+    <div class="col-md-3 col-sm-6">
+        <div class="card stat-card shadow-sm h-100">
+            <div class="d-flex justify-content-between align-items-center">
+                <div>
+                    <div class="stat-label">Station Operators</div>
+                    <div class="stat-value text-navy">{{ total_operators }}</div>
+                    <div class="small text-muted mt-1">Assigned staff accounts</div>
+                </div>
+                <div class="fs-1 text-warning bg-warning bg-opacity-10 p-3 rounded-circle">
+                    <i class="bi bi-person-badge-fill"></i>
+                </div>
+            </div>
+            <div class="mt-3 pt-2 border-top">
+                <a href="{% url 'admin_operators' %}" class="small text-decoration-none fw-semibold text-warning">Manage Operators &rarr;</a>
+            </div>
+        </div>
+    </div>
+
+    <div class="col-md-3 col-sm-6">
+        <div class="card stat-card shadow-sm h-100">
+            <div class="d-flex justify-content-between align-items-center">
+                <div>
+                    <div class="stat-label">Total Points / Slots</div>
+                    <div class="stat-value text-navy">{{ total_points }}</div>
+                    <div class="small text-muted mt-1">{{ available_points }} Available Free</div>
+                </div>
+                <div class="fs-1 text-info bg-info bg-opacity-10 p-3 rounded-circle">
+                    <i class="bi bi-plug-fill"></i>
+                </div>
+            </div>
+            <div class="mt-3 pt-2 border-top">
+                <a href="{% url 'admin_points' %}" class="small text-decoration-none fw-semibold text-info">Manage Slots &rarr;</a>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Secondary Status Row -->
+<div class="row g-3 mb-4">
+    <div class="col">
+        <div class="p-3 bg-white border rounded shadow-sm d-flex justify-content-between align-items-center">
+            <div>
+                <span class="text-muted small fw-bold text-uppercase d-block">Available Slots</span>
+                <span class="h4 fw-bold text-success mb-0">{{ available_points }}</span>
+            </div>
+            <span class="badge badge-available">FREE</span>
+        </div>
+    </div>
+    <div class="col">
+        <div class="p-3 bg-white border rounded shadow-sm d-flex justify-content-between align-items-center">
+            <div>
+                <span class="text-muted small fw-bold text-uppercase d-block">Reserved Slots</span>
+                <span class="h4 fw-bold text-warning mb-0">{{ reserved_points }}</span>
+            </div>
+            <span class="badge badge-reserved">HOLD</span>
+        </div>
+    </div>
+    <div class="col">
+        <div class="p-3 bg-white border rounded shadow-sm d-flex justify-content-between align-items-center">
+            <div>
+                <span class="text-muted small fw-bold text-uppercase d-block">Charging Now</span>
+                <span class="h4 fw-bold text-primary mb-0">{{ charging_points }}</span>
+            </div>
+            <span class="badge badge-charging">ACTIVE</span>
+        </div>
+    </div>
+    <div class="col">
+        <div class="p-3 bg-white border rounded shadow-sm d-flex justify-content-between align-items-center">
+            <div>
+                <span class="text-muted small fw-bold text-uppercase d-block">Total Bookings</span>
+                <span class="h4 fw-bold text-dark mb-0">{{ total_bookings }}</span>
+            </div>
+            <span class="badge bg-light text-dark border">ALL</span>
+        </div>
+    </div>
+    <div class="col">
+        <div class="p-3 bg-white border rounded shadow-sm d-flex justify-content-between align-items-center">
+            <div>
+                <span class="text-muted small fw-bold text-uppercase d-block">Waiting Queue</span>
+                <span class="h4 fw-bold text-warning mb-0">{{ queue_entries_count }}</span>
+            </div>
+            <span class="badge bg-warning text-dark">WAITING</span>
+        </div>
+    </div>
+</div>
+
+<div class="row g-4 mb-4">
+    <!-- Chart: Station Booking Distribution -->
+    <div class="col-lg-6">
+        <div class="card shadow-sm border h-100">
+            <div class="card-header bg-white fw-bold">
+                <i class="bi bi-bar-chart-fill text-primary me-1"></i> Station Booking Throughput
+            </div>
+            <div class="card-body p-4">
+                <canvas id="stationChart" height="240"></canvas>
+            </div>
+        </div>
+    </div>
+
+    <!-- Chart: Point Status System-Wide -->
+    <div class="col-lg-6">
+        <div class="card shadow-sm border h-100">
+            <div class="card-header bg-white fw-bold">
+                <i class="bi bi-pie-chart-fill text-success me-1"></i> System-Wide Point Status
+            </div>
+            <div class="card-body p-4 d-flex justify-content-center align-items-center">
+                <div style="max-width: 280px; width: 100%;">
+                    <canvas id="adminStatusChart"></canvas>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Recent System Bookings Table -->
+<div class="card shadow-sm border">
+    <div class="card-header bg-white d-flex justify-content-between align-items-center">
+        <h5 class="mb-0 fw-bold text-navy"><i class="bi bi-clock-history me-2 text-primary"></i> System-Wide Recent Bookings</h5>
+        <a href="{% url 'admin_bookings' %}" class="small text-decoration-none">View All Bookings &rarr;</a>
+    </div>
+    <div class="card-body p-0">
+        <div class="table-responsive">
+            <table class="table table-hover mb-0">
+                <thead>
+                    <tr>
+                        <th>Booking ID</th>
+                        <th>Station</th>
+                        <th>Slot</th>
+                        <th>User</th>
+                        <th>Date &amp; Time</th>
+                        <th>Duration</th>
+                        <th>Status</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for b in recent_bookings %}
+                        <tr>
+                            <td class="fw-bold">#{{ b.booking_id }}</td>
+                            <td>{{ b.station.name }}</td>
+                            <td>{{ b.charging_point.point_number }}</td>
+                            <td>{{ b.user.get_full_name|default:b.user.username }}</td>
+                            <td>{{ b.date }} ({{ b.start_time|time:"h:i A" }})</td>
+                            <td>{{ b.duration_minutes }}m</td>
+                            <td>
+                                <span class="badge {% if b.status == 'CONFIRMED' %}badge-reserved{% elif b.status == 'CHARGING' %}badge-charging{% elif b.status == 'COMPLETED' %}badge-available{% else %}badge-out-of-service{% endif %}">
+                                    {{ b.get_status_display }}
+                                </span>
+                            </td>
+                        </tr>
+                    {% empty %}
+                        <tr>
+                            <td colspan="7" class="text-center py-4 text-muted">No bookings recorded in the system yet.</td>
+                        </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+    document.addEventListener('DOMContentLoaded', function() {
+        // Station Throughput Bar Chart
+        const barCtx = document.getElementById('stationChart').getContext('2d');
+        new Chart(barCtx, {
+            type: 'bar',
+            data: {
+                labels: {{ station_names|safe }},
+                datasets: [{
+                    label: 'Bookings Count',
+                    data: {{ station_booking_counts|safe }},
+                    backgroundColor: '#10b981',
+                    borderRadius: 6
+                }]
+            },
+            options: {
+                responsive: true,
+                maintainAspectRatio: false,
+                scales: {
+                    y: { beginAtZero: true }
+                }
+            }
+        });
+
+        // Status Doughnut Chart
+        const donutCtx = document.getElementById('adminStatusChart').getContext('2d');
+        new Chart(donutCtx, {
+            type: 'doughnut',
+            data: {
+                labels: ['Available', 'Reserved', 'Charging', 'Finishing', 'Out of Service'],
+                datasets: [{
+                    data: [
+                        {{ available_points }},
+                        {{ reserved_points }},
+                        {{ charging_points }},
+                        {{ finishing_points }},
+                        {{ out_of_service_points }}
+                    ],
+                    backgroundColor: ['#10b981', '#f59e0b', '#3b82f6', '#ea580c', '#64748b'],
+                    borderWidth: 2,
+                    borderColor: '#ffffff'
+                }]
+            },
+            options: {
+                responsive: true,
+                plugins: {
+                    legend: { position: 'bottom' }
+                }
+            }
+        });
+    });
+</script>
+{% endblock %}

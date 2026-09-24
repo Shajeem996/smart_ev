@@ -1,0 +1,103 @@
+{% extends 'base.html' %}
+
+{% block title %}My Station - Smart EVCharge{% endblock %}
+
+{% block content %}
+<div class="row align-items-center mb-4">
+    <div class="col-md-7">
+        <h2 class="page-title text-navy"><i class="bi bi-building-gear text-primary me-2"></i> {{ station.name }}</h2>
+        <p class="page-subtitle">Assigned Station Profile &bull; Operator: {{ user.get_full_name|default:user.username }}</p>
+    </div>
+    <div class="col-md-5 text-md-end">
+        <a href="{% url 'operator_verify_qr' %}" class="btn btn-navy me-2">
+            <i class="bi bi-qr-code-scan me-1"></i> Scan Arrival QR
+        </a>
+        <a href="{% url 'operator_points' %}" class="btn btn-ev-primary">
+            <i class="bi bi-sliders me-1"></i> Point Status Controls
+        </a>
+    </div>
+</div>
+
+<div class="row g-4 mb-4">
+    <div class="col-md-6">
+        <div class="card shadow-sm border h-100">
+            <div class="card-header bg-white fw-bold">
+                <i class="bi bi-info-circle me-1 text-primary"></i> Station Facility Data
+            </div>
+            <div class="card-body">
+                <table class="table table-borderless">
+                    <tr>
+                        <th class="text-muted" style="width: 35%;">Station Name:</th>
+                        <td class="fw-bold">{{ station.name }}</td>
+                    </tr>
+                    <tr>
+                        <th class="text-muted">Street Address:</th>
+                        <td>{{ station.address }}</td>
+                    </tr>
+                    <tr>
+                        <th class="text-muted">City / Region:</th>
+                        <td>{{ station.city }}</td>
+                    </tr>
+                    <tr>
+                        <th class="text-muted">Contact Phone:</th>
+                        <td>{{ station.contact }}</td>
+                    </tr>
+                    <tr>
+                        <th class="text-muted">Operating Hours:</th>
+                        <td>{{ station.operating_hours }}</td>
+                    </tr>
+                    <tr>
+                        <th class="text-muted">Geo Coordinates:</th>
+                        <td><code>{{ station.latitude }}, {{ station.longitude }}</code></td>
+                    </tr>
+                    <tr>
+                        <th class="text-muted">Current Status:</th>
+                        <td>
+                            <span class="badge {% if station.status == 'ACTIVE' %}bg-success{% else %}bg-secondary{% endif %}">
+                                {{ station.get_status_display }}
+                            </span>
+                        </td>
+                    </tr>
+                </table>
+            </div>
+        </div>
+    </div>
+
+    <div class="col-md-6">
+        <div class="card shadow-sm border h-100">
+            <div class="card-header bg-white fw-bold">
+                <i class="bi bi-pie-chart text-success me-1"></i> Live Station Throughput Summary
+            </div>
+            <div class="card-body">
+                <div class="row text-center g-3 mb-4">
+                    <div class="col-4">
+                        <div class="p-3 bg-light rounded border">
+                            <div class="h3 fw-bold text-success mb-0">{{ station.available_points }}</div>
+                            <div class="small text-muted">Available</div>
+                        </div>
+                    </div>
+                    <div class="col-4">
+                        <div class="p-3 bg-light rounded border">
+                            <div class="h3 fw-bold text-primary mb-0">{{ active_sessions.count }}</div>
+                            <div class="small text-muted">In Progress</div>
+                        </div>
+                    </div>
+                    <div class="col-4">
+                        <div class="p-3 bg-light rounded border">
+                            <div class="h3 fw-bold text-warning mb-0">{{ waiting_queue.count }}</div>
+                            <div class="small text-muted">Queued</div>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="p-3 bg-light rounded border">
+                    <h6 class="fw-bold text-navy mb-2"><i class="bi bi-shield-check text-success me-1"></i> Operator Station Isolation</h6>
+                    <p class="small text-muted mb-0">
+                        In accordance with system security rules, your credentials restrict you strictly to <strong>{{ station.name }}</strong>. You cannot access or modify records of any other charging hub.
+                    </p>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

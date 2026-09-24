@@ -1,0 +1,152 @@
+{% extends 'base.html' %}
+{% load static %}
+
+{% block title %}Smart EVCharge - EV Charging Slot Booking & Queue Scheduler{% endblock %}
+
+{% block content %}
+<div class="row align-items-center py-5 mb-4">
+    <div class="col-lg-7 mb-4 mb-lg-0">
+        <div class="badge bg-success bg-opacity-10 text-success fw-bold px-3 py-2 rounded-pill mb-3">
+            ⚡ Next-Gen EV Infrastructure Solution
+        </div>
+        <h1 class="display-4 fw-bold text-navy mb-3" style="color: #0f172a; line-height: 1.15;">
+            Smart EV Charging Slot Booking &amp; Queue Scheduler
+        </h1>
+        <p class="lead text-muted mb-4" style="font-size: 1.15rem;">
+            Eliminate charging anxiety and long station queues. Locate nearby high-speed EV chargers, verify real-time slot availability, reserve interval-guaranteed charging slots, and join smart priority queues with verified QR arrival.
+        </p>
+
+        <div class="d-flex flex-wrap gap-3 mb-4">
+            <a href="{% url 'live_map' %}" class="btn btn-navy btn-lg px-4 shadow-sm">
+                <i class="bi bi-map me-2"></i> Open Interactive Map
+            </a>
+            {% if user.is_authenticated and user.role == 'USER' %}
+                <a href="{% url 'book_slot' %}" class="btn btn-ev-primary btn-lg px-4 shadow-sm">
+                    <i class="bi bi-calendar-plus me-2"></i> Reserve Slot
+                </a>
+            {% elif not user.is_authenticated %}
+                <a href="{% url 'register' %}" class="btn btn-ev-primary btn-lg px-4 shadow-sm">
+                    <i class="bi bi-lightning-charge me-2"></i> Register as EV User
+                </a>
+                <a href="{% url 'login' %}" class="btn btn-outline-secondary btn-lg px-4">
+                    <i class="bi bi-box-arrow-in-right me-2"></i> Login
+                </a>
+            {% endif %}
+        </div>
+
+        <div class="row g-3 pt-3 border-top">
+            <div class="col-auto">
+                <div class="d-flex align-items-center">
+                    <i class="bi bi-shield-check text-success fs-4 me-2"></i>
+                    <div>
+                        <div class="fw-bold text-dark">{{ total_stations }} Active Stations</div>
+                        <div class="small text-muted">Across Metro Hubs</div>
+                    </div>
+                </div>
+            </div>
+            <div class="col-auto ms-lg-4">
+                <div class="d-flex align-items-center">
+                    <i class="bi bi-lightning-charge text-primary fs-4 me-2"></i>
+                    <div>
+                        <div class="fw-bold text-dark">{{ total_points }} Charging Points</div>
+                        <div class="small text-muted">CCS2, Type 2, CHAdeMO</div>
+                    </div>
+                </div>
+            </div>
+            <div class="col-auto ms-lg-4">
+                <div class="d-flex align-items-center">
+                    <i class="bi bi-clock-history text-warning fs-4 me-2"></i>
+                    <div>
+                        <div class="fw-bold text-dark">{{ total_bookings }} Bookings Processed</div>
+                        <div class="small text-muted">Conflict-free scheduling</div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div class="col-lg-5">
+        <div class="card shadow-sm border-0 bg-white p-4">
+            <div class="d-flex justify-content-between align-items-center mb-3">
+                <h5 class="fw-bold mb-0 text-navy"><i class="bi bi-broadcast text-success me-2"></i> Live Station Preview</h5>
+                <a href="{% url 'stations_list' %}" class="small text-decoration-none text-success fw-semibold">View All &rarr;</a>
+            </div>
+            <p class="small text-muted mb-3">Real-time availability of nearest smart charging points:</p>
+
+            <div class="list-group list-group-flush">
+                {% for station in stations %}
+                    <div class="list-group-item px-0 py-3 border-bottom">
+                        <div class="d-flex justify-content-between align-items-start">
+                            <div>
+                                <h6 class="mb-1 fw-bold text-dark">{{ station.name }}</h6>
+                                <p class="small text-muted mb-2"><i class="bi bi-geo-alt"></i> {{ station.city }} &bull; {{ station.operating_hours }}</p>
+                                <div>
+                                    {% for conn in station.connector_types %}
+                                        <span class="badge bg-light text-dark border me-1">{{ conn }}</span>
+                                    {% endfor %}
+                                </div>
+                            </div>
+                            <div class="text-end">
+                                <span class="badge {% if station.available_points > 0 %}badge-available{% else %}badge-reserved{% endif %} mb-2">
+                                    {{ station.available_points }} / {{ station.total_points }} Free
+                                </span>
+                                <div>
+                                    <a href="{% url 'book_slot' %}?station={{ station.id }}" class="btn btn-sm btn-ev-outline py-1 px-2">Book Slot</a>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                {% empty %}
+                    <div class="text-center py-4 text-muted">
+                        No stations loaded yet. Run seed data to populate.
+                    </div>
+                {% endfor %}
+            </div>
+
+            <div class="mt-3 text-center">
+                <a href="{% url 'live_map' %}" class="btn btn-light w-100 fw-semibold text-secondary">
+                    <i class="bi bi-geo-alt me-1 text-danger"></i> Explore Interactive Leaflet Map
+                </a>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Key Features Section -->
+<div class="py-4 my-3">
+    <div class="text-center mb-5">
+        <h3 class="fw-bold text-navy" style="color: #0f172a;">Smart EV Infrastructure Features</h3>
+        <p class="text-muted">Built following MCA engineering standards with robust interval scheduling and queue algorithms.</p>
+    </div>
+
+    <div class="row g-4">
+        <div class="col-md-4">
+            <div class="card h-100 p-4 border">
+                <div class="fs-1 text-success mb-3"><i class="bi bi-calendar2-range"></i></div>
+                <h5 class="fw-bold">Interval Overlap Protection</h5>
+                <p class="text-muted small">
+                    Backend mathematically validates time intervals <code>[start, end)</code> to prevent double bookings. If a point is occupied, overlap is rejected immediately.
+                </p>
+            </div>
+        </div>
+        <div class="col-md-4">
+            <div class="card h-100 p-4 border">
+                <div class="fs-1 text-primary mb-3"><i class="bi bi-diagram-3"></i></div>
+                <h5 class="fw-bold">Smart Priority Queue</h5>
+                <p class="text-muted small">
+                    If slots are fully occupied, users join a structured FIFO / Priority Queue. When an operator ends a charging session, the queue automatically triggers and notifies the next waiting user.
+                </p>
+            </div>
+        </div>
+        <div class="col-md-4">
+            <div class="card h-100 p-4 border">
+                <div class="fs-1 text-warning mb-3"><i class="bi bi-qr-code-scan"></i></div>
+                <h5 class="fw-bold">Verifiable QR Access</h5>
+                <p class="text-muted small">
+                    Every confirmed booking receives an encrypted QR code token. The station operator scans/verifies the booking at arrival to initiate the simulated charging lifecycle.
+                </p>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

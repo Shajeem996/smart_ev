@@ -1,0 +1,89 @@
+{% extends 'base.html' %}
+
+{% block title %}My Bookings - Smart EVCharge{% endblock %}
+
+{% block content %}
+<div class="row align-items-center mb-4">
+    <div class="col-md-7">
+        <h2 class="page-title text-navy"><i class="bi bi-journal-check text-success me-2"></i> My Charging Bookings</h2>
+        <p class="page-subtitle">View active reservations, past completed sessions, and booking QR credentials.</p>
+    </div>
+    <div class="col-md-5 text-md-end">
+        <a href="{% url 'book_slot' %}" class="btn btn-ev-primary">
+            <i class="bi bi-calendar-plus me-1"></i> Book New Slot
+        </a>
+    </div>
+</div>
+
+<div class="card shadow-sm border">
+    <div class="card-body p-0">
+        <div class="table-responsive">
+            <table class="table table-hover mb-0">
+                <thead>
+                    <tr>
+                        <th>Booking ID</th>
+                        <th>Station</th>
+                        <th>Slot / Point</th>
+                        <th>Vehicle</th>
+                        <th>Date &amp; Time</th>
+                        <th>Duration</th>
+                        <th>Status</th>
+                        <th>Actions</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for b in bookings %}
+                        <tr>
+                            <td class="fw-bold">
+                                <a href="{% url 'booking_detail' b.id %}" class="text-navy text-decoration-none">
+                                    #{{ b.booking_id }}
+                                </a>
+                            </td>
+                            <td>
+                                <div class="fw-semibold text-dark">{{ b.station.name }}</div>
+                                <div class="small text-muted">{{ b.station.city }}</div>
+                            </td>
+                            <td>
+                                <div>{{ b.charging_point.point_number }}</div>
+                                <span class="badge bg-light text-dark border small">{{ b.charging_point.get_connector_type_display }}</span>
+                            </td>
+                            <td>{{ b.vehicle.model }} ({{ b.vehicle.vehicle_number }})</td>
+                            <td>
+                                <div class="fw-semibold text-dark">{{ b.date }}</div>
+                                <div class="small text-muted">{{ b.start_time|time:"h:i A" }} &ndash; {{ b.end_time|time:"h:i A" }}</div>
+                            </td>
+                            <td>{{ b.duration_minutes }} Mins</td>
+                            <td>
+                                <span class="badge {% if b.status == 'CONFIRMED' %}badge-reserved{% elif b.status == 'CHARGING' %}badge-charging{% elif b.status == 'COMPLETED' %}badge-available{% else %}badge-out-of-service{% endif %}">
+                                    {{ b.get_status_display }}
+                                </span>
+                            </td>
+                            <td>
+                                <div class="btn-group btn-group-sm">
+                                    <a href="{% url 'booking_detail' b.id %}" class="btn btn-outline-secondary" title="View Details & QR">
+                                        <i class="bi bi-qr-code"></i>
+                                    </a>
+                                    {% if b.status == 'CONFIRMED' %}
+                                        <a href="{% url 'cancel_booking' b.id %}" class="btn btn-outline-danger" title="Cancel Booking">
+                                            <i class="bi bi-x-circle"></i>
+                                        </a>
+                                    {% endif %}
+                                </div>
+                            </td>
+                        </tr>
+                    {% empty %}
+                        <tr>
+                            <td colspan="8" class="text-center py-5 text-muted">
+                                <div class="fs-1 text-muted mb-2"><i class="bi bi-calendar-x"></i></div>
+                                <h5>No bookings found in your account</h5>
+                                <p class="small text-muted">Select an available charging station and reserve your first EV slot.</p>
+                                <a href="{% url 'book_slot' %}" class="btn btn-ev-primary btn-sm">Book a Slot Now</a>
+                            </td>
+                        </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+    </div>
+</div>
+{% endblock %}

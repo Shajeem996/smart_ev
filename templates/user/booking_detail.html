@@ -1,0 +1,104 @@
+{% extends 'base.html' %}
+
+{% block title %}Booking #{{ booking.booking_id }} - Smart EVCharge{% endblock %}
+
+{% block content %}
+<div class="row justify-content-center py-4">
+    <div class="col-lg-8">
+        <div class="d-flex justify-content-between align-items-center mb-3">
+            <a href="{% url 'my_bookings' %}" class="small text-decoration-none text-muted">
+                &larr; Back to My Bookings
+            </a>
+            <div>
+                {% if booking.status == 'CONFIRMED' %}
+                    <a href="{% url 'cancel_booking' booking.id %}" class="btn btn-outline-danger btn-sm">
+                        <i class="bi bi-x-circle me-1"></i> Cancel Booking
+                    </a>
+                {% endif %}
+            </div>
+        </div>
+
+        <div class="card shadow-sm border">
+            <!-- Card Header -->
+            <div class="card-header bg-white py-3 d-flex justify-content-between align-items-center">
+                <div>
+                    <span class="text-muted small text-uppercase fw-bold">Booking Confirmation</span>
+                    <h4 class="mb-0 fw-bold text-navy">#{{ booking.booking_id }}</h4>
+                </div>
+                <div>
+                    <span class="badge {% if booking.status == 'CONFIRMED' %}badge-reserved{% elif booking.status == 'CHARGING' %}badge-charging{% elif booking.status == 'COMPLETED' %}badge-available{% else %}badge-out-of-service{% endif %} fs-6 px-3 py-2">
+                        {{ booking.get_status_display }}
+                    </span>
+                </div>
+            </div>
+
+            <div class="card-body p-4 p-md-5">
+                <div class="row g-4 align-items-center">
+                    <!-- Left: QR Code Display -->
+                    <div class="col-md-5 text-center border-end-md pb-4 pb-md-0">
+                        <div class="p-3 bg-light rounded d-inline-block border mb-2">
+                            {% if booking.qr_code %}
+                                <img src="{{ booking.qr_code.url }}" alt="Booking QR Code" class="img-fluid rounded" style="max-width: 200px; height: auto;">
+                            {% else %}
+                                <div class="text-muted p-4"><i class="bi bi-qr-code fs-1"></i><br>Generating QR...</div>
+                            {% endif %}
+                        </div>
+                        <div class="fw-bold small text-navy">{{ booking.booking_id }}</div>
+                        <div class="text-muted small mt-1">
+                            <i class="bi bi-shield-check text-success me-1"></i> Scan at Station on Arrival
+                        </div>
+                    </div>
+
+                    <!-- Right: Slot & Station Specifications -->
+                    <div class="col-md-7">
+                        <h5 class="fw-bold text-navy mb-3">Reservation Summary</h5>
+
+                        <ul class="list-unstyled mb-0" style="line-height: 2.2;">
+                            <li class="border-bottom pb-1">
+                                <span class="text-muted">Charging Station:</span>
+                                <strong class="float-end text-dark">{{ booking.station.name }}</strong>
+                            </li>
+                            <li class="border-bottom pb-1">
+                                <span class="text-muted">Station Address:</span>
+                                <span class="float-end text-end text-dark small" style="max-width: 250px;">{{ booking.station.address }}, {{ booking.station.city }}</span>
+                            </li>
+                            <li class="border-bottom pb-1">
+                                <span class="text-muted">Charging Point (Slot):</span>
+                                <strong class="float-end text-dark">{{ booking.charging_point.point_number }}</strong>
+                            </li>
+                            <li class="border-bottom pb-1">
+                                <span class="text-muted">Connector &amp; Power:</span>
+                                <span class="float-end text-dark">{{ booking.charging_point.get_connector_type_display }} &bull; {{ booking.charging_point.power_rating }} kW</span>
+                            </li>
+                            <li class="border-bottom pb-1">
+                                <span class="text-muted">EV Vehicle:</span>
+                                <strong class="float-end text-dark">{{ booking.vehicle.model }} ({{ booking.vehicle.vehicle_number }})</strong>
+                            </li>
+                            <li class="border-bottom pb-1">
+                                <span class="text-muted">Reservation Date:</span>
+                                <strong class="float-end text-dark">{{ booking.date }}</strong>
+                            </li>
+                            <li class="border-bottom pb-1">
+                                <span class="text-muted">Reserved Time Interval:</span>
+                                <strong class="float-end text-primary">{{ booking.start_time|time:"h:i A" }} &ndash; {{ booking.end_time|time:"h:i A" }}</strong>
+                            </li>
+                            <li>
+                                <span class="text-muted">Allocated Duration:</span>
+                                <strong class="float-end text-dark">{{ booking.duration_minutes }} Minutes</strong>
+                            </li>
+                        </ul>
+                    </div>
+                </div>
+
+                <!-- Arrival Instructions -->
+                <div class="mt-4 p-3 bg-light rounded border">
+                    <div class="fw-bold text-navy small mb-1"><i class="bi bi-info-circle text-primary me-1"></i> Check-in Instructions for EV Drivers:</div>
+                    <p class="small text-muted mb-0">
+                        Please arrive 5 minutes prior to <strong>{{ booking.start_time|time:"h:i A" }}</strong>. Present this QR code or booking reference <code>{{ booking.booking_id }}</code> to the on-site Station Operator to verify your arrival and activate the charger.
+                    </p>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

@@ -1,0 +1,93 @@
+{% extends 'base.html' %}
+
+{% block title %}Verify QR Code - Smart EVCharge{% endblock %}
+
+{% block content %}
+<div class="row justify-content-center py-4">
+    <div class="col-lg-8">
+        <div class="page-header mb-4 text-center">
+            <h2 class="page-title text-navy"><i class="bi bi-qr-code-scan text-primary me-2"></i> Driver Arrival QR Verification</h2>
+            <p class="page-subtitle">{{ station.name }} &bull; Verify booking authentication before unlocking charger.</p>
+        </div>
+
+        <!-- Verification Input Card -->
+        <div class="card shadow-sm border mb-4">
+            <div class="card-body p-4 p-md-5">
+                <form method="get" class="mb-4">
+                    <label class="form-label fw-bold">Enter Booking ID or QR Token Payload:</label>
+                    <div class="input-group input-group-lg">
+                        <span class="input-group-text bg-white"><i class="bi bi-upc-scan text-muted"></i></span>
+                        <input type="text" name="code" class="form-control" placeholder="e.g. EVB-9F2B81 or SMARTEV:EVB-9F2B81:token" value="{{ query_entered }}" required autofocus>
+                        <button type="submit" class="btn btn-ev-primary fw-bold px-4">Verify Arrival</button>
+                    </div>
+                    <div class="form-text small text-muted mt-2">
+                        <i class="bi bi-info-circle me-1"></i> You can enter either the short Booking ID (e.g. <code>EVB-XXXXX</code>) or the full encrypted token payload scanned from the driver's phone.
+                    </div>
+                </form>
+
+                <!-- Verification Output Results -->
+                {% if verification_result == 'VALID' and booking %}
+                    <div class="alert alert-success border-success shadow-sm p-4 rounded" style="background-color: #ecfdf5;">
+                        <div class="d-flex align-items-center mb-3">
+                            <i class="bi bi-patch-check-fill text-success fs-1 me-3"></i>
+                            <div>
+                                <h4 class="fw-bold text-success mb-0">VALID BOOKING VERIFIED</h4>
+                                <div class="small text-muted">Arrival authenticated for {{ station.name }}</div>
+                            </div>
+                        </div>
+
+                        <div class="p-3 bg-white rounded border mb-4">
+                            <div class="row g-3">
+                                <div class="col-md-6">
+                                    <div class="small text-muted">Booking Reference:</div>
+                                    <strong class="text-navy fs-5">#{{ booking.booking_id }}</strong>
+                                </div>
+                                <div class="col-md-6">
+                                    <div class="small text-muted">Registered EV Driver:</div>
+                                    <strong class="text-dark">{{ booking.user.get_full_name|default:booking.user.username }}</strong> ({{ booking.user.phone }})
+                                </div>
+                                <div class="col-md-6">
+                                    <div class="small text-muted">Assigned Slot:</div>
+                                    <strong class="text-primary fs-6">{{ booking.charging_point.point_number }}</strong> ({{ booking.charging_point.get_connector_type_display }})
+                                </div>
+                                <div class="col-md-6">
+                                    <div class="small text-muted">Vehicle:</div>
+                                    <strong class="text-dark">{{ booking.vehicle.model }} ({{ booking.vehicle.vehicle_number }})</strong>
+                                </div>
+                                <div class="col-12 border-top pt-2">
+                                    <div class="small text-muted">Reserved Interval:</div>
+                                    <strong>{{ booking.date }} &bull; {{ booking.start_time|time:"h:i A" }} &ndash; {{ booking.end_time|time:"h:i A" }} ({{ booking.duration_minutes }} minutes)</strong>
+                                </div>
+                            </div>
+                        </div>
+
+                        {% if booking.status == 'CONFIRMED' %}
+                            <div class="d-grid">
+                                <a href="{% url 'operator_start_charging' booking.id %}" class="btn btn-success btn-lg fw-bold shadow-sm">
+                                    <i class="bi bi-play-circle-fill me-2"></i> Confirm Driver Arrival &amp; Start Charging Session
+                                </a>
+                            </div>
+                        {% elif booking.status == 'CHARGING' %}
+                            <div class="alert alert-info mb-0">
+                                <i class="bi bi-battery-charging me-1"></i> Charging session is already in progress for this booking.
+                                <a href="{% url 'operator_sessions' %}" class="btn btn-sm btn-outline-primary ms-2">View Active Session</a>
+                            </div>
+                        {% endif %}
+                    </div>
+
+                {% elif verification_result == 'INVALID' %}
+                    <div class="alert alert-danger border-danger shadow-sm p-4 rounded" style="background-color: #fef2f2;">
+                        <div class="d-flex align-items-center">
+                            <i class="bi bi-x-octagon-fill text-danger fs-1 me-3"></i>
+                            <div>
+                                <h4 class="fw-bold text-danger mb-1">INVALID BOOKING</h4>
+                                <p class="mb-0 text-dark">{{ error_message }}</p>
+                            </div>
+                        </div>
+                    </div>
+                {% endif %}
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

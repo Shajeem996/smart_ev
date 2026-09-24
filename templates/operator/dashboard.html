@@ -1,0 +1,239 @@
+{% extends 'base.html' %}
+
+{% block title %}Station Operator Dashboard - Smart EVCharge{% endblock %}
+
+{% block content %}
+<div class="row align-items-center mb-4">
+    <div class="col-md-7">
+        <div class="d-flex align-items-center gap-2">
+            <h2 class="page-title text-navy mb-0">{{ station.name }}</h2>
+            <span class="badge {% if station.status == 'ACTIVE' %}bg-success{% else %}bg-secondary{% endif %}">
+                {{ station.get_status_display }}
+            </span>
+        </div>
+        <p class="page-subtitle">
+            <i class="bi bi-geo-alt text-danger me-1"></i> {{ station.address }}, {{ station.city }} &bull; Station Operator: <strong>{{ user.get_full_name|default:user.username }}</strong>
+        </p>
+    </div>
+    <div class="col-md-5 text-md-end mt-3 mt-md-0">
+        <a href="{% url 'operator_verify_qr' %}" class="btn btn-navy me-2">
+            <i class="bi bi-qr-code-scan me-1"></i> Verify Booking QR
+        </a>
+        <a href="{% url 'operator_points' %}" class="btn btn-ev-primary">
+            <i class="bi bi-sliders me-1"></i> Manage Points
+        </a>
+    </div>
+</div>
+
+<!-- Station Points Status Counters Row -->
+<div class="row g-3 mb-4">
+    <div class="col">
+        <div class="card stat-card shadow-sm border-start border-4 border-success">
+            <div class="stat-label text-success">Available</div>
+            <div class="stat-value text-success">{{ available_cnt }}</div>
+            <div class="small text-muted mt-1">Ready for EV cars</div>
+        </div>
+    </div>
+    <div class="col">
+        <div class="card stat-card shadow-sm border-start border-4 border-warning">
+            <div class="stat-label text-warning">Reserved</div>
+            <div class="stat-value text-warning">{{ reserved_cnt }}</div>
+            <div class="small text-muted mt-1">Awaiting driver arrival</div>
+        </div>
+    </div>
+    <div class="col">
+        <div class="card stat-card shadow-sm border-start border-4 border-primary">
+            <div class="stat-label text-primary">Charging</div>
+            <div class="stat-value text-primary">{{ charging_cnt }}</div>
+            <div class="small text-muted mt-1">Active live sessions</div>
+        </div>
+    </div>
+    <div class="col">
+        <div class="card stat-card shadow-sm border-start border-4" style="border-left-color: #ea580c !important;">
+            <div class="stat-label" style="color: #ea580c;">Finishing</div>
+            <div class="stat-value" style="color: #ea580c;">{{ finishing_cnt }}</div>
+            <div class="small text-muted mt-1">Disconnecting / uncoupling</div>
+        </div>
+    </div>
+    <div class="col">
+        <div class="card stat-card shadow-sm border-start border-4 border-secondary">
+            <div class="stat-label text-secondary">Out of Service</div>
+            <div class="stat-value text-secondary">{{ out_of_service_cnt }}</div>
+            <div class="small text-muted mt-1">Maintenance / offline</div>
+        </div>
+    </div>
+</div>
+
+<div class="row g-4">
+    <!-- Active Charging Sessions -->
+    <div class="col-lg-7">
+        <div class="card shadow-sm border mb-4">
+            <div class="card-header bg-white d-flex justify-content-between align-items-center">
+                <h5 class="mb-0 fw-bold text-navy"><i class="bi bi-battery-charging text-primary me-2"></i> Active Charging Sessions</h5>
+                <a href="{% url 'operator_sessions' %}" class="small text-decoration-none text-muted">All Sessions &rarr;</a>
+            </div>
+            <div class="card-body p-0">
+                <div class="table-responsive">
+                    <table class="table table-hover mb-0">
+                        <thead>
+                            <tr>
+                                <th>Booking Ref</th>
+                                <th>Slot / Point</th>
+                                <th>Driver &amp; Vehicle</th>
+                                <th>Started At</th>
+                                <th>Actions</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            {% for s in active_sessions %}
+                                <tr>
+                                    <td class="fw-bold">#{{ s.booking.booking_id }}</td>
+                                    <td>
+                                        <span class="badge badge-charging">{{ s.booking.charging_point.point_number }}</span>
+                                    </td>
+                                    <td>
+                                        <div>{{ s.booking.user.get_full_name|default:s.booking.user.username }}</div>
+                                        <div class="small text-muted">{{ s.booking.vehicle.model }} ({{ s.booking.vehicle.vehicle_number }})</div>
+                                    </td>
+                                    <td class="small">{{ s.started_at|date:"h:i A" }}</td>
+                                    <td>
+                                        <a href="{% url 'operator_end_charging' s.id %}" class="btn btn-sm btn-outline-danger py-1" onclick="return confirm('Complete charging session and free this charging point?')">
+                                            <i class="bi bi-stop-circle me-1"></i> End Charging
+                                        </a>
+                                    </td>
+                                </tr>
+                            {% empty %}
+                                <tr>
+                                    <td colspan="5" class="text-center py-4 text-muted">
+                                        No vehicles are currently charging at this station.
+                                    </td>
+                                </tr>
+                            {% endfor %}
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
+
+        <!-- Today's Bookings -->
+        <div class="card shadow-sm border">
+            <div class="card-header bg-white d-flex justify-content-between align-items-center">
+                <h5 class="mb-0 fw-bold text-navy"><i class="bi bi-calendar-check text-success me-2"></i> Today's Reservations</h5>
+                <a href="{% url 'operator_bookings' %}" class="small text-decoration-none text-muted">All Station Bookings &rarr;</a>
+            </div>
+            <div class="card-body p-0">
+                <div class="table-responsive">
+                    <table class="table table-hover mb-0">
+                        <thead>
+                            <tr>
+                                <th>ID</th>
+                                <th>Time Interval</th>
+                                <th>Slot</th>
+                                <th>Driver</th>
+                                <th>Status</th>
+                                <th>Action</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            {% for b in todays_bookings %}
+                                <tr>
+                                    <td class="fw-bold text-navy">#{{ b.booking_id }}</td>
+                                    <td>{{ b.start_time|time:"h:i A" }} - {{ b.end_time|time:"h:i A" }}</td>
+                                    <td>{{ b.charging_point.point_number }}</td>
+                                    <td>{{ b.user.get_full_name|default:b.user.username }}</td>
+                                    <td>
+                                        <span class="badge {% if b.status == 'CONFIRMED' %}badge-reserved{% elif b.status == 'CHARGING' %}badge-charging{% elif b.status == 'COMPLETED' %}badge-available{% else %}badge-out-of-service{% endif %}">
+                                            {{ b.get_status_display }}
+                                        </span>
+                                    </td>
+                                    <td>
+                                        {% if b.status == 'CONFIRMED' %}
+                                            <a href="{% url 'operator_start_charging' b.id %}" class="btn btn-sm btn-success py-1 px-2" title="Confirm arrival and start charging">
+                                                <i class="bi bi-play-circle me-1"></i> Start
+                                            </a>
+                                        {% else %}
+                                            <span class="text-muted small">&mdash;</span>
+                                        {% endif %}
+                                    </td>
+                                </tr>
+                            {% empty %}
+                                <tr>
+                                    <td colspan="6" class="text-center py-4 text-muted">
+                                        No bookings scheduled for today.
+                                    </td>
+                                </tr>
+                            {% endfor %}
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Right Column: Queue & Quick Actions -->
+    <div class="col-lg-5">
+        <!-- Quick Action: QR Code Verification -->
+        <div class="card shadow-sm border mb-4 bg-navy text-white p-4" style="background-color: #0f172a;">
+            <div class="d-flex align-items-center mb-3">
+                <div class="fs-1 text-success me-3"><i class="bi bi-qr-code-scan"></i></div>
+                <div>
+                    <h5 class="fw-bold text-white mb-0">Driver Arrival Verification</h5>
+                    <div class="small text-light text-opacity-75">Scan QR or enter Booking Ref ID</div>
+                </div>
+            </div>
+            <form action="{% url 'operator_verify_qr' %}" method="get" class="d-flex gap-2">
+                <input type="text" name="code" class="form-control" placeholder="e.g. EVB-1A2B3C" required>
+                <button type="submit" class="btn btn-ev-primary text-nowrap fw-bold">Verify</button>
+            </form>
+        </div>
+
+        <!-- Waiting Queue Monitor -->
+        <div class="card shadow-sm border mb-4">
+            <div class="card-header bg-white d-flex justify-content-between align-items-center">
+                <h5 class="mb-0 fw-bold text-navy"><i class="bi bi-hourglass-split text-warning me-2"></i> Station Waiting Queue</h5>
+                <span class="badge bg-warning text-dark">{{ waiting_queue_count }} Drivers Waiting</span>
+            </div>
+            <div class="card-body p-3">
+                {% if waiting_queue_count > 0 %}
+                    <p class="small text-muted mb-3">
+                        When any active charging session completes, the queue scheduler will automatically notify the next driver in line.
+                    </p>
+                    <a href="{% url 'operator_queue' %}" class="btn btn-sm btn-outline-warning text-dark w-100 fw-bold">
+                        View &amp; Manage Waiting Queue
+                    </a>
+                {% else %}
+                    <div class="text-center py-4 text-muted">
+                        <i class="bi bi-check2-all text-success fs-3 mb-2 d-block"></i>
+                        No drivers currently waiting in queue for this station.
+                    </div>
+                {% endif %}
+            </div>
+        </div>
+
+        <!-- Points Overview List -->
+        <div class="card shadow-sm border">
+            <div class="card-header bg-white d-flex justify-content-between align-items-center">
+                <h5 class="mb-0 fw-bold text-navy"><i class="bi bi-plug text-primary me-2"></i> Station Slots Summary</h5>
+                <a href="{% url 'operator_points' %}" class="small text-decoration-none">Manage &rarr;</a>
+            </div>
+            <div class="card-body p-0">
+                <ul class="list-group list-group-flush">
+                    {% for p in points %}
+                        <li class="list-group-item d-flex justify-content-between align-items-center py-2 px-3">
+                            <div>
+                                <span class="fw-semibold text-dark">{{ p.point_number }}</span>
+                                <span class="small text-muted ms-1">({{ p.connector_type }} {{ p.power_rating }}kW)</span>
+                            </div>
+                            <div>
+                                <span class="badge {% if p.status == 'AVAILABLE' %}badge-available{% elif p.status == 'RESERVED' %}badge-reserved{% elif p.status == 'CHARGING' %}badge-charging{% elif p.status == 'FINISHING' %}badge-finishing{% else %}badge-out-of-service{% endif %}">
+                                    {{ p.get_status_display }}
+                                </span>
+                            </div>
+                        </li>
+                    {% endfor %}
+                </ul>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

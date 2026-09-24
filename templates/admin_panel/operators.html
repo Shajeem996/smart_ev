@@ -1,0 +1,80 @@
+{% extends 'base.html' %}
+
+{% block title %}Station Operators - System Admin{% endblock %}
+
+{% block content %}
+<div class="row align-items-center mb-4">
+    <div class="col-md-7">
+        <h2 class="page-title text-navy"><i class="bi bi-person-badge text-warning me-2"></i> Station Operator Accounts</h2>
+        <p class="page-subtitle">Delegate on-site facility management and station assignments.</p>
+    </div>
+    <div class="col-md-5 text-md-end">
+        <a href="{% url 'admin_operator_create' %}" class="btn btn-ev-primary">
+            <i class="bi bi-person-plus me-1"></i> Add Station Operator
+        </a>
+    </div>
+</div>
+
+<div class="card shadow-sm border">
+    <div class="card-body p-0">
+        <div class="table-responsive">
+            <table class="table table-hover mb-0">
+                <thead>
+                    <tr>
+                        <th>Operator Name</th>
+                        <th>Username / Email</th>
+                        <th>Contact Phone</th>
+                        <th>Assigned Station</th>
+                        <th>Account Status</th>
+                        <th>Actions</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for op in operators %}
+                        <tr>
+                            <td>
+                                <div class="fw-bold text-dark">{{ op.get_full_name|default:op.username }}</div>
+                                <div class="small text-muted">Created {{ op.date_joined|date:"M d, Y" }}</div>
+                            </td>
+                            <td>
+                                <div>{{ op.username }}</div>
+                                <div class="small text-muted">{{ op.email }}</div>
+                            </td>
+                            <td>{{ op.phone|default:'N/A' }}</td>
+                            <td>
+                                {% if op.operator_profile.assigned_station %}
+                                    <span class="badge bg-primary fs-6">{{ op.operator_profile.assigned_station.name }}</span>
+                                    <div class="small text-muted">{{ op.operator_profile.assigned_station.city }}</div>
+                                {% else %}
+                                    <span class="badge bg-secondary">Unassigned</span>
+                                {% endif %}
+                            </td>
+                            <td>
+                                {% if op.is_active %}
+                                    <span class="badge bg-success">Active</span>
+                                {% else %}
+                                    <span class="badge bg-danger">Deactivated</span>
+                                {% endif %}
+                            </td>
+                            <td>
+                                <div class="btn-group btn-group-sm">
+                                    <a href="{% url 'admin_operator_edit' op.id %}" class="btn btn-outline-secondary" title="Edit Assignment & Details">
+                                        <i class="bi bi-pencil"></i> Edit
+                                    </a>
+                                    <a href="{% url 'admin_operator_toggle' op.id %}" class="btn {% if op.is_active %}btn-outline-danger{% else %}btn-outline-success{% endif %}" title="Toggle Active Status">
+                                        {% if op.is_active %}Deactivate{% else %}Activate{% endif %}
+                                    </a>
+                                </div>
+                            </td>
+                        </tr>
+                    {% empty %}
+                        <tr>
+                            <td colspan="6" class="text-center py-4 text-muted">No station operators configured yet.</td>
+                        </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+    </div>
+</div>
+{% endblock %}

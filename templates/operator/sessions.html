@@ -1,0 +1,130 @@
+{% extends 'base.html' %}
+
+{% block title %}Charging Sessions - Smart EVCharge{% endblock %}
+
+{% block content %}
+<div class="row align-items-center mb-4">
+    <div class="col-md-7">
+        <h2 class="page-title text-navy"><i class="bi bi-battery-charging text-primary me-2"></i> Station Charging Sessions</h2>
+        <p class="page-subtitle">{{ station.name }} &bull; Monitor live charging cycles and energy delivery logs.</p>
+    </div>
+    <div class="col-md-5 text-md-end">
+        <a href="{% url 'operator_verify_qr' %}" class="btn btn-navy">
+            <i class="bi bi-qr-code-scan me-1"></i> Scan Next Arrival
+        </a>
+    </div>
+</div>
+
+<!-- Active Charging Sessions Table -->
+<div class="card shadow-sm border mb-4">
+    <div class="card-header bg-white py-3 d-flex justify-content-between align-items-center">
+        <h5 class="mb-0 fw-bold text-navy">
+            <span class="pulse-dot pulse-charging me-2"></span> Active In-Progress Charging Sessions
+        </h5>
+        <span class="badge bg-primary">{{ active_sessions.count }} Charging</span>
+    </div>
+    <div class="card-body p-0">
+        <div class="table-responsive">
+            <table class="table table-hover mb-0">
+                <thead>
+                    <tr>
+                        <th>Booking Ref</th>
+                        <th>Charging Point</th>
+                        <th>Driver &amp; Vehicle</th>
+                        <th>Start Time</th>
+                        <th>Simulated SOC</th>
+                        <th>Action</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for s in active_sessions %}
+                        <tr>
+                            <td class="fw-bold">
+                                <a href="{% url 'booking_detail' s.booking.id %}" class="text-navy text-decoration-none">
+                                    #{{ s.booking.booking_id }}
+                                </a>
+                            </td>
+                            <td>
+                                <span class="badge badge-charging">{{ s.booking.charging_point.point_number }}</span>
+                                <div class="small text-muted">{{ s.booking.charging_point.power_rating }} kW</div>
+                            </td>
+                            <td>
+                                <div>{{ s.booking.user.get_full_name|default:s.booking.user.username }}</div>
+                                <div class="small text-muted">{{ s.booking.vehicle.model }} ({{ s.booking.vehicle.vehicle_number }})</div>
+                            </td>
+                            <td>
+                                <div>{{ s.started_at|date:"h:i A" }}</div>
+                                <div class="small text-muted">{{ s.started_at|timesince }} ago</div>
+                            </td>
+                            <td>
+                                <div class="small fw-semibold text-primary mb-1">Target ~{{ s.final_soc }}%</div>
+                                <div class="charging-progress-bar" style="width: 140px;">
+                                    <div class="charging-progress-fill" style="width: 80%;"></div>
+                                </div>
+                            </td>
+                            <td>
+                                <a href="{% url 'operator_end_charging' s.id %}" class="btn btn-sm btn-outline-danger fw-semibold" onclick="return confirm('Complete charging session and notify waiting queue users?')">
+                                    <i class="bi bi-stop-circle me-1"></i> End Charging
+                                </a>
+                            </td>
+                        </tr>
+                    {% empty %}
+                        <tr>
+                            <td colspan="6" class="text-center py-4 text-muted">
+                                No active charging sessions in progress at this station.
+                            </td>
+                        </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+    </div>
+</div>
+
+<!-- Completed Sessions Log -->
+<div class="card shadow-sm border">
+    <div class="card-header bg-white py-3">
+        <h5 class="mb-0 fw-bold text-navy"><i class="bi bi-clock-history text-secondary me-2"></i> Recently Completed Charging Sessions</h5>
+    </div>
+    <div class="card-body p-0">
+        <div class="table-responsive">
+            <table class="table table-hover mb-0">
+                <thead>
+                    <tr>
+                        <th>Booking Ref</th>
+                        <th>Point</th>
+                        <th>Driver &amp; Vehicle</th>
+                        <th>Session Duration</th>
+                        <th>Energy Delivered</th>
+                        <th>Completed At</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for cs in completed_sessions %}
+                        <tr>
+                            <td class="fw-bold text-navy">#{{ cs.booking.booking_id }}</td>
+                            <td>{{ cs.booking.charging_point.point_number }}</td>
+                            <td>{{ cs.booking.user.get_full_name|default:cs.booking.user.username }} &bull; {{ cs.booking.vehicle.model }}</td>
+                            <td>
+                                {{ cs.started_at|date:"h:i A" }} &ndash; {{ cs.ended_at|date:"h:i A" }}
+                            </td>
+                            <td>
+                                <span class="badge bg-success bg-opacity-10 text-success fw-bold fs-6">
+                                    {{ cs.energy_delivered_kwh }} kWh
+                                </span>
+                            </td>
+                            <td class="small text-muted">{{ cs.ended_at|date:"M d, Y h:i A" }}</td>
+                        </tr>
+                    {% empty %}
+                        <tr>
+                            <td colspan="6" class="text-center py-4 text-muted">
+                                No completed sessions recorded yet.
+                            </td>
+                        </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+    </div>
+</div>
+{% endblock %}

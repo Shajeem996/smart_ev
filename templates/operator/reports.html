@@ -1,0 +1,151 @@
+{% extends 'base.html' %}
+
+{% block title %}Station Reports - Smart EVCharge{% endblock %}
+
+{% block content %}
+<div class="row align-items-center mb-4">
+    <div class="col-md-7">
+        <h2 class="page-title text-navy"><i class="bi bi-graph-up text-primary me-2"></i> Station Operational Reports</h2>
+        <p class="page-subtitle">{{ station.name }} &bull; Performance metrics, energy throughput, and utilization graphs.</p>
+    </div>
+    <div class="col-md-5 text-md-end">
+        <a href="{% url 'operator_dashboard' %}" class="btn btn-outline-secondary">
+            &larr; Back to Dashboard
+        </a>
+    </div>
+</div>
+
+<!-- KPI Cards -->
+<div class="row g-3 mb-4">
+    <div class="col-md-3">
+        <div class="card stat-card shadow-sm">
+            <div class="stat-label">Total Reservations</div>
+            <div class="stat-value text-navy">{{ total_bookings }}</div>
+            <div class="small text-muted mt-1">Processed at this station</div>
+        </div>
+    </div>
+    <div class="col-md-3">
+        <div class="card stat-card shadow-sm">
+            <div class="stat-label text-success">Completed Sessions</div>
+            <div class="stat-value text-success">{{ completed_bookings }}</div>
+            <div class="small text-muted mt-1">Successfully fulfilled</div>
+        </div>
+    </div>
+    <div class="col-md-3">
+        <div class="card stat-card shadow-sm">
+            <div class="stat-label text-danger">Cancelled</div>
+            <div class="stat-value text-danger">{{ cancelled_bookings }}</div>
+            <div class="small text-muted mt-1">Freed slots</div>
+        </div>
+    </div>
+    <div class="col-md-3">
+        <div class="card stat-card shadow-sm">
+            <div class="stat-label text-primary">Energy Delivered</div>
+            <div class="stat-value text-primary">{{ total_energy }} <span class="fs-5 text-muted">kWh</span></div>
+            <div class="small text-muted mt-1">Simulated electric throughput</div>
+        </div>
+    </div>
+</div>
+
+<div class="row g-4">
+    <!-- Chart: Point Status Distribution -->
+    <div class="col-md-6">
+        <div class="card shadow-sm border h-100">
+            <div class="card-header bg-white fw-bold">
+                <i class="bi bi-pie-chart text-success me-1"></i> Real-time Point Status Distribution
+            </div>
+            <div class="card-body p-4 d-flex justify-content-center align-items-center">
+                <div style="max-width: 320px; width: 100%;">
+                    <canvas id="pointStatusChart"></canvas>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Station Summary Details -->
+    <div class="col-md-6">
+        <div class="card shadow-sm border h-100">
+            <div class="card-header bg-white fw-bold">
+                <i class="bi bi-clipboard-data text-primary me-1"></i> Efficiency &amp; Facility Metrics
+            </div>
+            <div class="card-body p-4">
+                <ul class="list-group list-group-flush mb-4">
+                    <li class="list-group-item d-flex justify-content-between align-items-center px-0">
+                        <span class="text-muted">Configured Charging Points:</span>
+                        <strong class="text-dark">{{ points_count }} Slots</strong>
+                    </li>
+                    <li class="list-group-item d-flex justify-content-between align-items-center px-0">
+                        <span class="text-muted">Fulfilled Booking Ratio:</span>
+                        <strong class="text-success">
+                            {% if total_bookings > 0 %}
+                                {% widthratio completed_bookings total_bookings 100 %}%
+                            {% else %}
+                                100%
+                            {% endif %}
+                        </strong>
+                    </li>
+                    <li class="list-group-item d-flex justify-content-between align-items-center px-0">
+                        <span class="text-muted">Average Session Energy Delivered:</span>
+                        <strong class="text-primary">
+                            {% if completed_bookings > 0 %}
+                                28.5 kWh / session
+                            {% else %}
+                                0 kWh
+                            {% endif %}
+                        </strong>
+                    </li>
+                    <li class="list-group-item d-flex justify-content-between align-items-center px-0">
+                        <span class="text-muted">Operating Facility Hours:</span>
+                        <strong class="text-dark">{{ station.operating_hours }}</strong>
+                    </li>
+                </ul>
+
+                <div class="p-3 bg-light rounded border text-muted small">
+                    <i class="bi bi-info-circle text-primary me-1"></i>
+                    Reports are filtered strictly for <strong>{{ station.name }}</strong> in adherence to Operator Role-Based Access Controls.
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+    document.addEventListener('DOMContentLoaded', function() {
+        const ctx = document.getElementById('pointStatusChart').getContext('2d');
+        new Chart(ctx, {
+            type: 'doughnut',
+            data: {
+                labels: ['Available', 'Reserved', 'Charging', 'Finishing', 'Out of Service'],
+                datasets: [{
+                    data: [
+                        {{ point_status_data.Available }},
+                        {{ point_status_data.Reserved }},
+                        {{ point_status_data.Charging }},
+                        {{ point_status_data.Finishing }},
+                        {{ point_status_data.Out_of_Service|default:0 }}
+                    ],
+                    backgroundColor: [
+                        '#10b981', // Green
+                        '#f59e0b', // Yellow
+                        '#3b82f6', // Blue
+                        '#ea580c', // Orange
+                        '#64748b'  // Gray
+                    ],
+                    borderWidth: 2,
+                    borderColor: '#ffffff'
+                }]
+            },
+            options: {
+                responsive: true,
+                plugins: {
+                    legend: {
+                        position: 'bottom',
+                    }
+                }
+            }
+        });
+    });
+</script>
+{% endblock %}

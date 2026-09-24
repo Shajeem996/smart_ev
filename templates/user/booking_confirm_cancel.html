@@ -1,0 +1,31 @@
+{% extends 'base.html' %}
+
+{% block title %}Cancel Booking #{{ booking.booking_id }} - Smart EVCharge{% endblock %}
+
+{% block content %}
+<div class="row justify-content-center py-5">
+    <div class="col-md-6 col-lg-5">
+        <div class="card shadow-sm border">
+            <div class="card-body p-4 text-center">
+                <div class="fs-1 text-danger mb-3"><i class="bi bi-exclamation-circle-fill"></i></div>
+                <h4 class="fw-bold text-navy mb-2">Cancel Charging Slot Reservation?</h4>
+                <p class="text-muted small mb-4">
+                    Are you sure you want to cancel booking <strong>#{{ booking.booking_id }}</strong> at <strong>{{ booking.station.name }}</strong> for <strong>{{ booking.date }} ({{ booking.start_time|time:"h:i A" }})</strong>?
+                </p>
+
+                <div class="p-3 bg-light rounded text-start small text-muted mb-4 border">
+                    <i class="bi bi-info-circle text-primary me-1"></i> Cancelling will release <strong>{{ booking.charging_point.point_number }}</strong> back into the available pool and automatically trigger promotion of waiting queue drivers.
+                </div>
+
+                <form method="post">
+                    {% csrf_token %}
+                    <div class="d-flex justify-content-center gap-3">
+                        <a href="{% url 'booking_detail' booking.id %}" class="btn btn-outline-secondary px-4">Keep Booking</a>
+                        <button type="submit" class="btn btn-danger px-4">Confirm Cancellation</button>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

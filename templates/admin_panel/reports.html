@@ -1,0 +1,129 @@
+{% extends 'base.html' %}
+
+{% block title %}System Analytics & Reports - System Admin{% endblock %}
+
+{% block content %}
+<div class="row align-items-center mb-4">
+    <div class="col-md-7">
+        <h2 class="page-title text-navy"><i class="bi bi-pie-chart text-success me-2"></i> System Analytics &amp; Reports</h2>
+        <p class="page-subtitle">High-level station utilization, booking completion ratios, and energy delivery statistics.</p>
+    </div>
+</div>
+
+<!-- Primary Stats -->
+<div class="row g-3 mb-4">
+    <div class="col-md-3">
+        <div class="card stat-card shadow-sm">
+            <div class="stat-label">Total Bookings</div>
+            <div class="stat-value text-navy">{{ total_bookings }}</div>
+            <div class="small text-muted mt-1">Lifetime system bookings</div>
+        </div>
+    </div>
+    <div class="col-md-3">
+        <div class="card stat-card shadow-sm">
+            <div class="stat-label text-success">Completed Fulfillments</div>
+            <div class="stat-value text-success">{{ completed_bookings }}</div>
+            <div class="small text-muted mt-1">Successful charging sessions</div>
+        </div>
+    </div>
+    <div class="col-md-3">
+        <div class="card stat-card shadow-sm">
+            <div class="stat-label text-danger">Cancelled Bookings</div>
+            <div class="stat-value text-danger">{{ cancelled_bookings }}</div>
+            <div class="small text-muted mt-1">Freed interval slots</div>
+        </div>
+    </div>
+    <div class="col-md-3">
+        <div class="card stat-card shadow-sm">
+            <div class="stat-label text-primary">Total Energy Delivered</div>
+            <div class="stat-value text-primary">{{ total_energy_delivered }} <span class="fs-5 text-muted">kWh</span></div>
+            <div class="small text-muted mt-1">Simulated electrical output</div>
+        </div>
+    </div>
+</div>
+
+<div class="row g-4 mb-4">
+    <!-- Chart: Station Utilization -->
+    <div class="col-lg-8">
+        <div class="card shadow-sm border h-100">
+            <div class="card-header bg-white fw-bold">
+                <i class="bi bi-bar-chart-fill text-primary me-1"></i> Station Total vs Completed Bookings
+            </div>
+            <div class="card-body p-4">
+                <canvas id="utilizationChart" height="280"></canvas>
+            </div>
+        </div>
+    </div>
+
+    <!-- Chart: Booking Status Breakdown -->
+    <div class="col-lg-4">
+        <div class="card shadow-sm border h-100">
+            <div class="card-header bg-white fw-bold">
+                <i class="bi bi-pie-chart text-success me-1"></i> Overall Booking Status
+            </div>
+            <div class="card-body p-4 d-flex justify-content-center align-items-center">
+                <div style="max-width: 250px; width: 100%;">
+                    <canvas id="bookingStatusChart"></canvas>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+    document.addEventListener('DOMContentLoaded', function() {
+        // Station Utilization Chart
+        const utilCtx = document.getElementById('utilizationChart').getContext('2d');
+        new Chart(utilCtx, {
+            type: 'bar',
+            data: {
+                labels: {{ station_names|safe }},
+                datasets: [
+                    {
+                        label: 'Total Bookings',
+                        data: {{ station_bookings|safe }},
+                        backgroundColor: '#3b82f6',
+                        borderRadius: 4
+                    },
+                    {
+                        label: 'Completed Bookings',
+                        data: {{ station_completed|safe }},
+                        backgroundColor: '#10b981',
+                        borderRadius: 4
+                    }
+                ]
+            },
+            options: {
+                responsive: true,
+                maintainAspectRatio: false,
+                scales: {
+                    y: { beginAtZero: true }
+                }
+            }
+        });
+
+        // Booking Status Doughnut
+        const statusCtx = document.getElementById('bookingStatusChart').getContext('2d');
+        new Chart(statusCtx, {
+            type: 'doughnut',
+            data: {
+                labels: ['Completed', 'Confirmed', 'Cancelled'],
+                datasets: [{
+                    data: [{{ completed_bookings }}, {{ confirmed_bookings }}, {{ cancelled_bookings }}],
+                    backgroundColor: ['#10b981', '#f59e0b', '#ef4444'],
+                    borderWidth: 2,
+                    borderColor: '#ffffff'
+                }]
+            },
+            options: {
+                responsive: true,
+                plugins: {
+                    legend: { position: 'bottom' }
+                }
+            }
+        });
+    });
+</script>
+{% endblock %}

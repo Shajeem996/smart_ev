@@ -1,0 +1,285 @@
+{% extends 'base.html' %}
+
+{% block title %}EV User Dashboard - Smart EVCharge{% endblock %}
+
+{% block content %}
+<div class="row align-items-center mb-4">
+    <div class="col-md-7">
+        <h2 class="page-title">Welcome, {{ user.first_name|default:user.username }}!</h2>
+        <p class="page-subtitle">Track your vehicle reservations, live charging status, and waiting queue positions.</p>
+    </div>
+    <div class="col-md-5 text-md-end mt-3 mt-md-0">
+        <a href="{% url 'live_map' %}" class="btn btn-navy me-2 shadow-sm">
+            <i class="bi bi-map me-1"></i> Interactive Map
+        </a>
+        <a href="{% url 'book_slot' %}" class="btn btn-ev-primary shadow-sm">
+            <i class="bi bi-calendar-plus me-1"></i> Book Slot
+        </a>
+    </div>
+</div>
+
+<!-- Active Charging or Active Booking Alert Banner -->
+{% if active_session %}
+    <div class="card border-primary mb-4 shadow-sm" style="background-color: #f0f7ff; border-left: 5px solid #2563eb !important;">
+        <div class="card-body p-4">
+            <div class="row align-items-center">
+                <div class="col-md-8">
+                    <div class="d-flex align-items-center mb-2">
+                        <span class="badge badge-charging me-2"><span class="pulse-dot pulse-charging me-1"></span> CHARGING IN PROGRESS</span>
+                        <span class="fw-bold text-dark">{{ active_session.booking.station.name }} &bull; {{ active_session.booking.charging_point.point_number }}</span>
+                    </div>
+                    <h4 class="fw-bold text-primary mb-2">
+                        ⚡ Charging Your {{ active_session.booking.vehicle.model }} ({{ active_session.booking.vehicle.vehicle_number }})
+                    </h4>
+                    <p class="text-muted small mb-3">
+                        Started at {{ active_session.started_at|date:"h:i A" }} &bull; Power: {{ active_session.booking.charging_point.power_rating }} kW ({{ active_session.booking.charging_point.get_connector_type_display }})
+                    </p>
+
+                    <div class="mb-2 d-flex justify-content-between small fw-semibold">
+                        <span>Simulated Battery Charge: ~{{ active_session.final_soc }}%</span>
+                        <span id="charging-session-timer" data-seconds-elapsed="600" class="text-primary"><i class="bi bi-stopwatch"></i> Active</span>
+                    </div>
+                    <div class="charging-progress-bar">
+                        <div class="charging-progress-fill" style="width: 75%;"></div>
+                    </div>
+                </div>
+                <div class="col-md-4 text-md-end mt-3 mt-md-0">
+                    <a href="{% url 'booking_detail' active_session.booking.id %}" class="btn btn-primary fw-semibold">
+                        <i class="bi bi-qr-code me-1"></i> View Booking &amp; QR
+                    </a>
+                </div>
+            </div>
+        </div>
+    </div>
+{% elif active_booking %}
+    <div class="card border-success mb-4 shadow-sm" style="background-color: #f0fdf4; border-left: 5px solid #10b981 !important;">
+        <div class="card-body p-4">
+            <div class="row align-items-center">
+                <div class="col-md-8">
+                    <div class="d-flex align-items-center mb-2">
+                        <span class="badge badge-reserved me-2">ACTIVE RESERVATION</span>
+                        <span class="fw-bold text-dark">Ref: #{{ active_booking.booking_id }}</span>
+                    </div>
+                    <h5 class="fw-bold text-success mb-1">
+                        {{ active_booking.station.name }} &mdash; {{ active_booking.charging_point.point_number }}
+                    </h5>
+                    <p class="text-muted small mb-0">
+                        <i class="bi bi-calendar-event me-1"></i> {{ active_booking.date }} from <strong>{{ active_booking.start_time|time:"h:i A" }} to {{ active_booking.end_time|time:"h:i A" }}</strong> ({{ active_booking.duration_minutes }} mins) &bull; Vehicle: {{ active_booking.vehicle.model }}
+                    </p>
+                </div>
+                <div class="col-md-4 text-md-end mt-3 mt-md-0">
+                    <a href="{% url 'booking_detail' active_booking.id %}" class="btn btn-ev-primary">
+                        <i class="bi bi-qr-code me-1"></i> Show QR to Operator
+                    </a>
+                </div>
+            </div>
+        </div>
+    </div>
+{% endif %}
+
+<!-- Quick Stats Row -->
+<div class="row g-3 mb-4">
+    <div class="col-md-4">
+        <div class="card stat-card shadow-sm h-100">
+            <div class="d-flex justify-content-between align-items-center">
+                <div>
+                    <div class="stat-label">Active Queue Spot</div>
+                    <div class="stat-value text-warning">
+                        {% if active_queue %}
+                            #{{ active_queue.queue_position }}
+                        {% else %}
+                            &mdash;
+                        {% endif %}
+                    </div>
+                    <div class="small text-muted mt-1">
+                        {% if active_queue %}
+                            At {{ active_queue.station.name }}
+                        {% else %}
+                            Not in waiting queue
+                        {% endif %}
+                    </div>
+                </div>
+                <div class="fs-1 text-warning bg-warning bg-opacity-10 p-3 rounded-circle">
+                    <i class="bi bi-hourglass-split"></i>
+                </div>
+            </div>
+            {% if active_queue %}
+                <div class="mt-3 pt-2 border-top">
+                    <a href="{% url 'user_queue' %}" class="small text-decoration-none fw-semibold text-warning">View Queue Status &rarr;</a>
+                </div>
+            {% endif %}
+        </div>
+    </div>
+
+    <div class="col-md-4">
+        <div class="card stat-card shadow-sm h-100">
+            <div class="d-flex justify-content-between align-items-center">
+                <div>
+                    <div class="stat-label">Completed Sessions</div>
+                    <div class="stat-value text-success">{{ completed_sessions_count }}</div>
+                    <div class="small text-muted mt-1">Total lifetime charging sessions</div>
+                </div>
+                <div class="fs-1 text-success bg-success bg-opacity-10 p-3 rounded-circle">
+                    <i class="bi bi-check-circle-fill"></i>
+                </div>
+            </div>
+            <div class="mt-3 pt-2 border-top">
+                <a href="{% url 'my_bookings' %}" class="small text-decoration-none fw-semibold text-success">View Charging History &rarr;</a>
+            </div>
+        </div>
+    </div>
+
+    <div class="col-md-4">
+        <div class="card stat-card shadow-sm h-100">
+            <div class="d-flex justify-content-between align-items-center">
+                <div>
+                    <div class="stat-label">My Registered EVs</div>
+                    <div class="stat-value text-navy">{{ vehicles.count }}</div>
+                    <div class="small text-muted mt-1">Saved vehicles for rapid booking</div>
+                </div>
+                <div class="fs-1 text-primary bg-primary bg-opacity-10 p-3 rounded-circle">
+                    <i class="bi bi-car-front-fill"></i>
+                </div>
+            </div>
+            <div class="mt-3 pt-2 border-top">
+                <a href="{% url 'vehicle_list' %}" class="small text-decoration-none fw-semibold text-primary">Manage Vehicles &rarr;</a>
+            </div>
+        </div>
+    </div>
+</div>
+
+<div class="row g-4">
+    <!-- Upcoming Charging Slots -->
+    <div class="col-lg-8">
+        <div class="card shadow-sm border mb-4">
+            <div class="card-header d-flex justify-content-between align-items-center">
+                <h5 class="mb-0 fw-bold"><i class="bi bi-calendar-event me-2 text-primary"></i> Upcoming Charging Slots</h5>
+                <a href="{% url 'my_bookings' %}" class="small text-decoration-none text-muted">All Bookings &rarr;</a>
+            </div>
+            <div class="card-body p-0">
+                <div class="table-responsive">
+                    <table class="table table-hover mb-0">
+                        <thead>
+                            <tr>
+                                <th>Booking ID</th>
+                                <th>Station &amp; Slot</th>
+                                <th>Vehicle</th>
+                                <th>Date &amp; Time</th>
+                                <th>Status</th>
+                                <th>Action</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            {% for b in upcoming_bookings %}
+                                <tr>
+                                    <td class="fw-bold">
+                                        <a href="{% url 'booking_detail' b.id %}" class="text-decoration-none text-navy">
+                                            #{{ b.booking_id }}
+                                        </a>
+                                    </td>
+                                    <td>
+                                        <div class="fw-semibold">{{ b.station.name }}</div>
+                                        <div class="small text-muted">{{ b.charging_point.point_number }}</div>
+                                    </td>
+                                    <td>{{ b.vehicle.model }}</td>
+                                    <td>
+                                        <div>{{ b.date }}</div>
+                                        <div class="small text-muted">{{ b.start_time|time:"h:i A" }} - {{ b.end_time|time:"h:i A" }}</div>
+                                    </td>
+                                    <td>
+                                        <span class="badge {% if b.status == 'CONFIRMED' %}badge-reserved{% elif b.status == 'CHARGING' %}badge-charging{% elif b.status == 'COMPLETED' %}badge-available{% else %}badge-out-of-service{% endif %}">
+                                            {{ b.get_status_display }}
+                                        </span>
+                                    </td>
+                                    <td>
+                                        <a href="{% url 'booking_detail' b.id %}" class="btn btn-sm btn-outline-secondary py-1 px-2" title="View QR & Details">
+                                            <i class="bi bi-qr-code"></i> View
+                                        </a>
+                                    </td>
+                                </tr>
+                            {% empty %}
+                                <tr>
+                                    <td colspan="6" class="text-center py-4 text-muted">
+                                        No upcoming charging slots booked.
+                                        <div class="mt-2">
+                                            <a href="{% url 'book_slot' %}" class="btn btn-sm btn-ev-primary">Book a Slot Now</a>
+                                        </div>
+                                    </td>
+                                </tr>
+                            {% endfor %}
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
+
+        <!-- My Vehicles Quick Overview -->
+        <div class="card shadow-sm border">
+            <div class="card-header d-flex justify-content-between align-items-center">
+                <h5 class="mb-0 fw-bold"><i class="bi bi-car-front me-2 text-success"></i> My EV Vehicles</h5>
+                <a href="{% url 'vehicle_add' %}" class="btn btn-sm btn-ev-outline py-1"><i class="bi bi-plus-lg"></i> Add Vehicle</a>
+            </div>
+            <div class="card-body">
+                <div class="row g-3">
+                    {% for vehicle in vehicles %}
+                        <div class="col-md-6">
+                            <div class="p-3 border rounded bg-light d-flex justify-content-between align-items-center">
+                                <div>
+                                    <div class="fw-bold text-dark">{{ vehicle.model }}</div>
+                                    <div class="small text-muted">{{ vehicle.vehicle_number }} &bull; {{ vehicle.battery_capacity }} kWh</div>
+                                    <span class="badge bg-secondary mt-1">{{ vehicle.get_connector_type_display }}</span>
+                                </div>
+                                <div>
+                                    <a href="{% url 'vehicle_edit' vehicle.id %}" class="btn btn-sm btn-outline-secondary py-1 px-2"><i class="bi bi-pencil"></i></a>
+                                </div>
+                            </div>
+                        </div>
+                    {% empty %}
+                        <div class="col-12 text-center py-3 text-muted">
+                            No vehicles added yet. <a href="{% url 'vehicle_add' %}">Add your first vehicle</a> to enable fast booking.
+                        </div>
+                    {% endfor %}
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Right Column: Recent Alerts & Quick Navigation -->
+    <div class="col-lg-4">
+        <!-- Recent Alerts Card -->
+        <div class="card shadow-sm border mb-4">
+            <div class="card-header d-flex justify-content-between align-items-center">
+                <h5 class="mb-0 fw-bold"><i class="bi bi-bell me-2 text-warning"></i> Recent Alerts</h5>
+                <a href="{% url 'notifications_list' %}" class="small text-decoration-none text-muted">All &rarr;</a>
+            </div>
+            <div class="card-body p-0">
+                <div class="list-group list-group-flush">
+                    {% for alert in recent_alerts %}
+                        <div class="list-group-item p-3 border-bottom">
+                            <div class="d-flex justify-content-between align-items-start mb-1">
+                                <span class="fw-semibold small text-dark">{{ alert.title }}</span>
+                                <span class="text-muted" style="font-size: 0.7rem;">{{ alert.created_at|timesince }} ago</span>
+                            </div>
+                            <p class="small text-muted mb-0">{{ alert.message }}</p>
+                        </div>
+                    {% empty %}
+                        <div class="text-center py-4 text-muted small">No recent alerts</div>
+                    {% endfor %}
+                </div>
+            </div>
+        </div>
+
+        <!-- Quick Help Card -->
+        <div class="card shadow-sm border p-3 bg-light">
+            <h6 class="fw-bold mb-2 text-navy"><i class="bi bi-question-circle text-primary me-1"></i> How EV Charging Works</h6>
+            <ol class="small text-muted ps-3 mb-0" style="line-height: 1.6;">
+                <li>Select station and reserve a time slot.</li>
+                <li>Receive an instant booking ID &amp; QR code.</li>
+                <li>Arrive at the station and present your QR code.</li>
+                <li>Operator verifies and starts the charging cycle.</li>
+                <li>Track live charging progress on your dashboard!</li>
+            </ol>
+        </div>
+    </div>
+</div>
+{% endblock %}

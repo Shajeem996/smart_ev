@@ -1,0 +1,89 @@
+{% extends 'base.html' %}
+
+{% block title %}System Queues - System Admin{% endblock %}
+
+{% block content %}
+<div class="row align-items-center mb-4">
+    <div class="col-md-7">
+        <h2 class="page-title text-navy"><i class="bi bi-list-ol text-warning me-2"></i> Station Waiting Queue Management</h2>
+        <p class="page-subtitle">Track queue length, priority rankings, and promotion events across all hubs.</p>
+    </div>
+</div>
+
+<!-- Station Filter Bar -->
+<div class="card shadow-sm border mb-4">
+    <div class="card-body p-3">
+        <form method="get" class="row g-2 align-items-center">
+            <div class="col-md-9">
+                <select name="station" class="form-select">
+                    <option value="">-- All Stations --</option>
+                    {% for s in stations %}
+                        <option value="{{ s.id }}" {% if selected_station == s.id|stringformat:"i" %}selected{% endif %}>{{ s.name }}</option>
+                    {% endfor %}
+                </select>
+            </div>
+            <div class="col-md-3 d-grid">
+                <button type="submit" class="btn btn-navy">Filter Queue</button>
+            </div>
+        </form>
+    </div>
+</div>
+
+<div class="card shadow-sm border">
+    <div class="card-body p-0">
+        <div class="table-responsive">
+            <table class="table table-hover mb-0">
+                <thead>
+                    <tr>
+                        <th>Queue #</th>
+                        <th>Station</th>
+                        <th>User</th>
+                        <th>Vehicle</th>
+                        <th>Target Time</th>
+                        <th>Connector</th>
+                        <th>Priority</th>
+                        <th>Status</th>
+                        <th>Joined At</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for q in queues %}
+                        <tr>
+                            <td>
+                                <span class="badge {% if q.status == 'WAITING' %}bg-warning text-dark{% elif q.status == 'NOTIFIED' %}bg-success{% else %}bg-secondary{% endif %} fw-bold px-3 py-2">
+                                    #{{ q.queue_position }}
+                                </span>
+                            </td>
+                            <td>{{ q.station.name }}</td>
+                            <td>
+                                <div>{{ q.user.get_full_name|default:q.user.username }}</div>
+                                <div class="small text-muted">{{ q.user.email }}</div>
+                            </td>
+                            <td>{{ q.vehicle.model }}</td>
+                            <td>{{ q.requested_date }} {{ q.requested_time|time:"h:i A" }}</td>
+                            <td><span class="badge bg-secondary">{{ q.preferred_connector }}</span></td>
+                            <td>
+                                {% if q.priority > 1 %}
+                                    <span class="badge bg-danger">HIGH</span>
+                                {% else %}
+                                    <span class="badge bg-light text-dark border">Standard</span>
+                                {% endif %}
+                            </td>
+                            <td>
+                                <span class="badge {% if q.status == 'WAITING' %}badge-reserved{% elif q.status == 'NOTIFIED' %}badge-available{% else %}badge-out-of-service{% endif %}">
+                                    {{ q.get_status_display }}
+                                </span>
+                            </td>
+                            <td class="small text-muted">{{ q.created_at|date:"M d, h:i A" }}</td>
+                        </tr>
+                    {% empty %}
+                        <tr>
+                            <td colspan="9" class="text-center py-4 text-muted">No queue entries found.</td>
+                        </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+    </div>
+</div>
+{% endblock %}

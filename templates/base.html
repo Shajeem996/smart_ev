@@ -1,0 +1,275 @@
+{% load static %}
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>{% block title %}Smart EVCharge - EV Slot Booking & Queue Scheduler{% endblock %}</title>
+
+    <!-- Google Fonts: Inter -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+
+    <!-- Bootstrap 5 CSS -->
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/css/bootstrap.min.css" rel="stylesheet">
+
+    <!-- Bootstrap Icons -->
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/font/bootstrap-icons.min.css">
+
+    <!-- Leaflet CSS for Maps -->
+    <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" integrity="sha256-p4NxAoJBhIIN+hmNHrzRCf9tD/miZyoHS5obTRR9BMY=" crossorigin=""/>
+
+    <!-- Custom CSS -->
+    <link rel="stylesheet" href="{% static 'css/style.css' %}">
+
+    {% block extra_css %}{% endblock %}
+</head>
+<body>
+
+    <!-- Dark Navy Navigation Bar -->
+    <nav class="navbar navbar-expand-lg navbar-dark navbar-custom sticky-top">
+        <div class="container-fluid px-lg-4">
+            <a class="navbar-brand" href="{% url 'landing' %}">
+                <span class="brand-accent">⚡</span> Smart <span class="brand-accent">EVCharge</span>
+                {% if user.is_authenticated %}
+                    {% if user.role == 'USER' %}
+                        <span class="role-badge role-badge-user">EV User</span>
+                    {% elif user.role == 'OPERATOR' %}
+                        <span class="role-badge role-badge-operator">Station Operator</span>
+                    {% elif user.role == 'ADMIN' %}
+                        <span class="role-badge role-badge-admin">System Admin</span>
+                    {% endif %}
+                {% endif %}
+            </a>
+
+            <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbarMain" aria-controls="navbarMain" aria-expanded="false" aria-label="Toggle navigation">
+                <span class="navbar-toggler-icon"></span>
+            </button>
+
+            <div class="collapse navbar-collapse" id="navbarMain">
+                <ul class="navbar-nav me-auto mb-2 mb-lg-0">
+                    {% if not user.is_authenticated %}
+                        <!-- Anonymous / Guest Navigation -->
+                        <li class="nav-item">
+                            <a class="nav-link" href="{% url 'landing' %}"><i class="bi bi-house-door"></i> Home</a>
+                        </li>
+                        <li class="nav-item">
+                            <a class="nav-link" href="{% url 'live_map' %}"><i class="bi bi-map"></i> Live Map</a>
+                        </li>
+                        <li class="nav-item">
+                            <a class="nav-link" href="{% url 'stations_list' %}"><i class="bi bi-ev-station"></i> Stations</a>
+                        </li>
+
+                    {% elif user.role == 'USER' %}
+                        <!-- EV USER NAVIGATION (Strictly Customer-facing) -->
+                        <li class="nav-item">
+                            <a class="nav-link" href="{% url 'user_dashboard' %}"><i class="bi bi-speedometer2"></i> Dashboard</a>
+                        </li>
+                        <li class="nav-item">
+                            <a class="nav-link" href="{% url 'live_map' %}"><i class="bi bi-map"></i> Live Map</a>
+                        </li>
+                        <li class="nav-item">
+                            <a class="nav-link" href="{% url 'stations_list' %}"><i class="bi bi-ev-station"></i> Stations</a>
+                        </li>
+                        <li class="nav-item">
+                            <a class="nav-link accent-link text-white" href="{% url 'book_slot' %}"><i class="bi bi-calendar-plus"></i> Book Slot</a>
+                        </li>
+                        <li class="nav-item">
+                            <a class="nav-link" href="{% url 'user_queue' %}"><i class="bi bi-hourglass-split"></i> Waiting Queue</a>
+                        </li>
+                        <li class="nav-item">
+                            <a class="nav-link" href="{% url 'my_bookings' %}"><i class="bi bi-journal-check"></i> My Bookings</a>
+                        </li>
+                        <li class="nav-item">
+                            <a class="nav-link" href="{% url 'vehicle_list' %}"><i class="bi bi-car-front"></i> My Vehicles</a>
+                        </li>
+
+                    {% elif user.role == 'OPERATOR' %}
+                        <!-- STATION OPERATOR NAVIGATION (Assigned station only) -->
+                        <li class="nav-item">
+                            <a class="nav-link" href="{% url 'operator_dashboard' %}"><i class="bi bi-speedometer2"></i> Dashboard</a>
+                        </li>
+                        <li class="nav-item">
+                            <a class="nav-link" href="{% url 'operator_station' %}"><i class="bi bi-building-gear"></i> My Station</a>
+                        </li>
+                        <li class="nav-item">
+                            <a class="nav-link" href="{% url 'operator_points' %}"><i class="bi bi-ev-station"></i> Charging Points</a>
+                        </li>
+                        <li class="nav-item">
+                            <a class="nav-link" href="{% url 'operator_verify_qr' %}"><i class="bi bi-qr-code-scan"></i> Verify QR</a>
+                        </li>
+                        <li class="nav-item">
+                            <a class="nav-link" href="{% url 'operator_bookings' %}"><i class="bi bi-calendar-check"></i> Bookings</a>
+                        </li>
+                        <li class="nav-item">
+                            <a class="nav-link" href="{% url 'operator_sessions' %}"><i class="bi bi-battery-charging"></i> Charging Sessions</a>
+                        </li>
+                        <li class="nav-item">
+                            <a class="nav-link" href="{% url 'operator_queue' %}"><i class="bi bi-people"></i> Queue</a>
+                        </li>
+                        <li class="nav-item">
+                            <a class="nav-link" href="{% url 'operator_reports' %}"><i class="bi bi-graph-up"></i> Reports</a>
+                        </li>
+
+                    {% elif user.role == 'ADMIN' %}
+                        <!-- SYSTEM ADMIN NAVIGATION (System-wide management) -->
+                        <li class="nav-item">
+                            <a class="nav-link" href="{% url 'admin_dashboard' %}"><i class="bi bi-speedometer2"></i> Dashboard</a>
+                        </li>
+                        <li class="nav-item">
+                            <a class="nav-link" href="{% url 'admin_users' %}"><i class="bi bi-people"></i> Users</a>
+                        </li>
+                        <li class="nav-item">
+                            <a class="nav-link" href="{% url 'admin_stations' %}"><i class="bi bi-ev-station"></i> Stations</a>
+                        </li>
+                        <li class="nav-item">
+                            <a class="nav-link" href="{% url 'admin_operators' %}"><i class="bi bi-person-badge"></i> Operators</a>
+                        </li>
+                        <li class="nav-item">
+                            <a class="nav-link" href="{% url 'admin_points' %}"><i class="bi bi-plug"></i> Charging Points</a>
+                        </li>
+                        <li class="nav-item">
+                            <a class="nav-link" href="{% url 'admin_bookings' %}"><i class="bi bi-calendar-event"></i> Bookings</a>
+                        </li>
+                        <li class="nav-item">
+                            <a class="nav-link" href="{% url 'admin_sessions' %}"><i class="bi bi-battery-charging"></i> Sessions</a>
+                        </li>
+                        <li class="nav-item">
+                            <a class="nav-link" href="{% url 'admin_queues' %}"><i class="bi bi-list-ol"></i> Queue</a>
+                        </li>
+                        <li class="nav-item">
+                            <a class="nav-link" href="{% url 'admin_reports' %}"><i class="bi bi-pie-chart"></i> Reports</a>
+                        </li>
+                        <li class="nav-item">
+                            <a class="nav-link" href="{% url 'admin_settings' %}"><i class="bi bi-gear"></i> Settings</a>
+                        </li>
+                    {% endif %}
+                </ul>
+
+                <!-- Right Side: User Profile / Auth buttons -->
+                <ul class="navbar-nav ms-auto align-items-center">
+                    {% if user.is_authenticated %}
+                        <!-- Notification Dropdown -->
+                        <li class="nav-item dropdown me-2">
+                            <a class="nav-link position-relative" href="#" id="notificationDropdown" role="button" data-bs-toggle="dropdown" aria-expanded="false">
+                                <i class="bi bi-bell fs-5"></i>
+                                {% if unread_notifications_count > 0 %}
+                                    <span class="position-absolute top-1 start-100 translate-middle badge rounded-pill bg-danger" style="font-size: 0.65rem;">
+                                        {{ unread_notifications_count }}
+                                    </span>
+                                {% endif %}
+                            </a>
+                            <ul class="dropdown-menu dropdown-menu-end shadow-sm" aria-labelledby="notificationDropdown" style="width: 320px; max-height: 400px; overflow-y: auto;">
+                                <li class="dropdown-header d-flex justify-content-between align-items-center">
+                                    <span class="fw-bold text-dark">Notifications</span>
+                                    {% if unread_notifications_count > 0 %}
+                                        <a href="{% url 'mark_all_read' %}" class="small text-decoration-none">Mark all read</a>
+                                    {% endif %}
+                                </li>
+                                <li><hr class="dropdown-divider my-1"></li>
+                                {% if recent_navbar_notifications %}
+                                    {% for notif in recent_navbar_notifications %}
+                                        <li>
+                                            <a class="dropdown-item py-2 px-3 {% if not notif.is_read %}bg-light{% endif %}" href="{% url 'mark_notification_read' notif.id %}">
+                                                <div class="fw-semibold small text-dark">{{ notif.title }}</div>
+                                                <div class="small text-muted text-truncate" style="max-width: 280px;">{{ notif.message }}</div>
+                                                <div class="text-muted" style="font-size: 0.7rem;">{{ notif.created_at|timesince }} ago</div>
+                                            </a>
+                                        </li>
+                                    {% endfor %}
+                                    <li><hr class="dropdown-divider my-1"></li>
+                                    <li><a class="dropdown-item text-center small text-primary fw-semibold" href="{% url 'notifications_list' %}">View all notifications</a></li>
+                                {% else %}
+                                    <li class="text-center text-muted py-3 small">No notifications yet</li>
+                                {% endif %}
+                            </ul>
+                        </li>
+
+                        <!-- User Profile Dropdown -->
+                        <li class="nav-item dropdown">
+                            <a class="nav-link dropdown-toggle text-white d-flex align-items-center" href="#" id="userMenu" role="button" data-bs-toggle="dropdown" aria-expanded="false">
+                                <i class="bi bi-person-circle fs-5 me-1"></i>
+                                <span>{{ user.first_name|default:user.username }}</span>
+                            </a>
+                            <ul class="dropdown-menu dropdown-menu-end shadow-sm" aria-labelledby="userMenu">
+                                <li>
+                                    <div class="px-3 py-1">
+                                        <div class="fw-bold">{{ user.get_full_name|default:user.username }}</div>
+                                        <div class="small text-muted">{{ user.email }}</div>
+                                    </div>
+                                </li>
+                                <li><hr class="dropdown-divider"></li>
+                                <li><a class="dropdown-item" href="{% url 'profile' %}"><i class="bi bi-person me-2"></i> Profile Details</a></li>
+                                <li><hr class="dropdown-divider"></li>
+                                <li><a class="dropdown-item text-danger" href="{% url 'logout' %}"><i class="bi bi-box-arrow-right me-2"></i> Logout</a></li>
+                            </ul>
+                        </li>
+                    {% else %}
+                        <li class="nav-item me-2">
+                            <a class="nav-link" href="{% url 'login' %}"><i class="bi bi-box-arrow-in-right"></i> Login</a>
+                        </li>
+                        <li class="nav-item">
+                            <a class="btn btn-sm btn-ev-primary" href="{% url 'register' %}">Register EV User</a>
+                        </li>
+                    {% endif %}
+                </ul>
+            </div>
+        </div>
+    </nav>
+
+    <!-- Global Alerts Container -->
+    <div class="container-fluid px-lg-4 mt-3">
+        {% if messages %}
+            {% for message in messages %}
+                <div class="alert alert-{{ message.tags|default:'info' }} alert-dismissible fade show shadow-sm" role="alert">
+                    {% if message.tags == 'error' or message.tags == 'danger' %}
+                        <i class="bi bi-exclamation-triangle-fill me-2"></i>
+                    {% elif message.tags == 'success' %}
+                        <i class="bi bi-check-circle-fill me-2"></i>
+                    {% elif message.tags == 'warning' %}
+                        <i class="bi bi-exclamation-circle-fill me-2"></i>
+                    {% else %}
+                        <i class="bi bi-info-circle-fill me-2"></i>
+                    {% endif %}
+                    {{ message }}
+                    <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+                </div>
+            {% endfor %}
+        {% endif %}
+    </div>
+
+    <!-- Main Content Block -->
+    <main class="container-fluid px-lg-4">
+        {% block content %}{% endblock %}
+    </main>
+
+    <!-- Footer -->
+    <footer class="mt-auto">
+        <div class="container-fluid px-lg-4 d-flex flex-column flex-md-row justify-content-between align-items-center">
+            <div class="mb-2 mb-md-0">
+                <span class="fw-bold text-white">Smart EVCharge</span> &copy; 2026. EV Slot Booking & Queue Scheduler. MCA Project.
+            </div>
+            <div class="small">
+                <span class="text-muted me-3">Built with Django & Leaflet</span>
+                <a href="{% url 'live_map' %}" class="me-3">Interactive Map</a>
+                <a href="{% url 'stations_list' %}">Stations</a>
+            </div>
+        </div>
+    </footer>
+
+    <!-- Bootstrap 5 JS Bundle -->
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/js/bootstrap.bundle.min.js"></script>
+
+    <!-- Leaflet JS -->
+    <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js" integrity="sha256-20nQCchB9co0qIjJZRGuk2/Z9VM+kNiyxNV1lvTlZBo=" crossorigin=""></script>
+
+    <!-- Chart.js -->
+    <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.1/dist/chart.umd.min.js"></script>
+
+    <!-- Custom Main JS -->
+    <script src="{% static 'js/main.js' %}"></script>
+
+    {% block extra_js %}{% endblock %}
+</body>
+</html>

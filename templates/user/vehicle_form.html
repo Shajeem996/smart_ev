@@ -1,0 +1,71 @@
+{% extends 'base.html' %}
+
+{% block title %}{{ title }} - Smart EVCharge{% endblock %}
+
+{% block content %}
+<div class="row justify-content-center py-4">
+    <div class="col-md-7 col-lg-6">
+        <div class="page-header mb-4">
+            <h2 class="page-title text-navy"><i class="bi bi-car-front text-success me-2"></i> {{ title }}</h2>
+            <p class="page-subtitle">Configure battery specs and connector compatibility</p>
+        </div>
+
+        <div class="card shadow-sm border">
+            <div class="card-body p-4 p-md-5">
+                <form method="post" novalidate>
+                    {% csrf_token %}
+
+                    <div class="mb-3">
+                        <label class="form-label" for="{{ form.vehicle_number.id_for_label }}">Registration Number</label>
+                        {{ form.vehicle_number }}
+                        <div class="form-text small text-muted">e.g. KA-01-EV-1234 or DL-03-EB-5678</div>
+                        {% if form.vehicle_number.errors %}
+                            <div class="text-danger small mt-1">{{ form.vehicle_number.errors.0 }}</div>
+                        {% endif %}
+                    </div>
+
+                    <div class="mb-3">
+                        <label class="form-label" for="{{ form.model.id_for_label }}">EV Vehicle Model</label>
+                        {{ form.model }}
+                        <div class="form-text small text-muted">e.g. Tata Nexon EV Max, Hyundai Ioniq 5, MG ZS EV</div>
+                        {% if form.model.errors %}
+                            <div class="text-danger small mt-1">{{ form.model.errors.0 }}</div>
+                        {% endif %}
+                    </div>
+
+                    <div class="row g-3 mb-3">
+                        <div class="col-md-6">
+                            <label class="form-label" for="{{ form.connector_type.id_for_label }}">Charging Connector</label>
+                            {{ form.connector_type }}
+                            {% if form.connector_type.errors %}
+                                <div class="text-danger small mt-1">{{ form.connector_type.errors.0 }}</div>
+                            {% endif %}
+                        </div>
+                        <div class="col-md-6">
+                            <label class="form-label" for="{{ form.battery_capacity.id_for_label }}">Battery Capacity (kWh)</label>
+                            {{ form.battery_capacity }}
+                            {% if form.battery_capacity.errors %}
+                                <div class="text-danger small mt-1">{{ form.battery_capacity.errors.0 }}</div>
+                            {% endif %}
+                        </div>
+                    </div>
+
+                    <div class="mb-4">
+                        <label class="form-label" for="{{ form.nickname.id_for_label }}">Optional Nickname</label>
+                        {{ form.nickname }}
+                        <div class="form-text small text-muted">e.g. Daily Commuter, Primary Family EV</div>
+                        {% if form.nickname.errors %}
+                            <div class="text-danger small mt-1">{{ form.nickname.errors.0 }}</div>
+                        {% endif %}
+                    </div>
+
+                    <div class="d-flex justify-content-end gap-2">
+                        <a href="{% url 'vehicle_list' %}" class="btn btn-outline-secondary">Cancel</a>
+                        <button type="submit" class="btn btn-ev-primary">Save Vehicle</button>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

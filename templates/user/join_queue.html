@@ -1,0 +1,79 @@
+{% extends 'base.html' %}
+
+{% block title %}Join Waiting Queue - Smart EVCharge{% endblock %}
+
+{% block content %}
+<div class="row justify-content-center py-4">
+    <div class="col-lg-7">
+        <div class="page-header mb-4">
+            <h2 class="page-title text-navy"><i class="bi bi-hourglass-split text-warning me-2"></i> Join Station Waiting Queue</h2>
+            <p class="page-subtitle">Reserve your place in the smart priority queue when all charging points are occupied.</p>
+        </div>
+
+        <div class="card shadow-sm border">
+            <div class="card-body p-4 p-md-5">
+                <form method="post" novalidate>
+                    {% csrf_token %}
+
+                    <div class="mb-3">
+                        <label class="form-label" for="{{ form.station.id_for_label }}">Select Charging Station</label>
+                        {{ form.station }}
+                        {% if form.station.errors %}
+                            <div class="text-danger small mt-1">{{ form.station.errors.0 }}</div>
+                        {% endif %}
+                    </div>
+
+                    <div class="mb-3">
+                        <label class="form-label" for="{{ form.vehicle.id_for_label }}">Your EV Vehicle</label>
+                        {{ form.vehicle }}
+                        {% if form.vehicle.errors %}
+                            <div class="text-danger small mt-1">{{ form.vehicle.errors.0 }}</div>
+                        {% endif %}
+                    </div>
+
+                    <div class="row g-3 mb-3">
+                        <div class="col-md-6">
+                            <label class="form-label" for="{{ form.requested_date.id_for_label }}">Date</label>
+                            {{ form.requested_date }}
+                            {% if form.requested_date.errors %}
+                                <div class="text-danger small mt-1">{{ form.requested_date.errors.0 }}</div>
+                            {% endif %}
+                        </div>
+                        <div class="col-md-6">
+                            <label class="form-label" for="{{ form.requested_time.id_for_label }}">Target Arrival Time</label>
+                            {{ form.requested_time }}
+                            {% if form.requested_time.errors %}
+                                <div class="text-danger small mt-1">{{ form.requested_time.errors.0 }}</div>
+                            {% endif %}
+                        </div>
+                    </div>
+
+                    <div class="row g-3 mb-3">
+                        <div class="col-md-6">
+                            <label class="form-label" for="{{ form.preferred_connector.id_for_label }}">Preferred Connector</label>
+                            {{ form.preferred_connector }}
+                        </div>
+                        <div class="col-md-6">
+                            <label class="form-label" for="{{ form.duration_minutes.id_for_label }}">Estimated Duration</label>
+                            {{ form.duration_minutes }}
+                        </div>
+                    </div>
+
+                    <div class="mb-4">
+                        <label class="form-label" for="{{ form.priority.id_for_label }}">Queue Priority</label>
+                        {{ form.priority }}
+                        <div class="form-text small text-muted">High priority is queued ahead of normal requests.</div>
+                    </div>
+
+                    <div class="d-flex justify-content-end gap-2">
+                        <a href="{% url 'user_queue' %}" class="btn btn-outline-secondary">Cancel</a>
+                        <button type="submit" class="btn btn-warning text-dark fw-bold">
+                            <i class="bi bi-check2-circle me-1"></i> Register in Queue
+                        </button>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

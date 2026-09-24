@@ -1,0 +1,78 @@
+{% extends 'base.html' %}
+
+{% block title %}Charging Points - Smart EVCharge{% endblock %}
+
+{% block content %}
+<div class="row align-items-center mb-4">
+    <div class="col-md-7">
+        <h2 class="page-title text-navy"><i class="bi bi-ev-station text-primary me-2"></i> Charging Points Management</h2>
+        <p class="page-subtitle">{{ station.name }} &bull; Monitor connector status and manually toggle availability.</p>
+    </div>
+    <div class="col-md-5 text-md-end">
+        <a href="{% url 'operator_dashboard' %}" class="btn btn-outline-secondary">
+            &larr; Back to Dashboard
+        </a>
+    </div>
+</div>
+
+<div class="card shadow-sm border">
+    <div class="card-body p-0">
+        <div class="table-responsive">
+            <table class="table table-hover mb-0">
+                <thead>
+                    <tr>
+                        <th>Point Number</th>
+                        <th>Connector</th>
+                        <th>Power Rating</th>
+                        <th>Speed Category</th>
+                        <th>Current Status</th>
+                        <th>Status Override</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for p in points %}
+                        <tr>
+                            <td class="fw-bold text-navy">{{ p.point_number }}</td>
+                            <td><span class="badge bg-secondary">{{ p.get_connector_type_display }}</span></td>
+                            <td>{{ p.power_rating }} kW</td>
+                            <td class="small text-muted">{{ p.get_charging_speed_display }}</td>
+                            <td>
+                                {% if p.status == 'AVAILABLE' %}
+                                    <span class="badge-status badge-available"><span class="pulse-dot pulse-available"></span> AVAILABLE</span>
+                                {% elif p.status == 'RESERVED' %}
+                                    <span class="badge-status badge-reserved"><span class="pulse-dot pulse-reserved"></span> RESERVED</span>
+                                {% elif p.status == 'CHARGING' %}
+                                    <span class="badge-status badge-charging"><span class="pulse-dot pulse-charging"></span> CHARGING</span>
+                                {% elif p.status == 'FINISHING' %}
+                                    <span class="badge-status badge-finishing"><span class="pulse-dot" style="background-color: #ea580c;"></span> FINISHING</span>
+                                {% else %}
+                                    <span class="badge-status badge-out-of-service"><span class="pulse-dot" style="background-color: #64748b;"></span> OUT OF SERVICE</span>
+                                {% endif %}
+                            </td>
+                            <td>
+                                <form action="{% url 'operator_point_status' p.id %}" method="post" class="d-inline-flex gap-2">
+                                    {% csrf_token %}
+                                    <select name="status" class="form-select form-select-sm" style="width: auto;">
+                                        <option value="AVAILABLE" {% if p.status == 'AVAILABLE' %}selected{% endif %}>AVAILABLE</option>
+                                        <option value="RESERVED" {% if p.status == 'RESERVED' %}selected{% endif %}>RESERVED</option>
+                                        <option value="CHARGING" {% if p.status == 'CHARGING' %}selected{% endif %}>CHARGING</option>
+                                        <option value="FINISHING" {% if p.status == 'FINISHING' %}selected{% endif %}>FINISHING</option>
+                                        <option value="OUT_OF_SERVICE" {% if p.status == 'OUT_OF_SERVICE' %}selected{% endif %}>OUT OF SERVICE</option>
+                                    </select>
+                                    <button type="submit" class="btn btn-sm btn-outline-primary">Update</button>
+                                </form>
+                            </td>
+                        </tr>
+                    {% empty %}
+                        <tr>
+                            <td colspan="6" class="text-center py-4 text-muted">
+                                No charging points configured for this station yet.
+                            </td>
+                        </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+    </div>
+</div>
+{% endblock %}

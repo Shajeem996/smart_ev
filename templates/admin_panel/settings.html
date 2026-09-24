@@ -1,0 +1,120 @@
+{% extends 'base.html' %}
+
+{% block title %}System Settings - System Admin{% endblock %}
+
+{% block content %}
+<div class="row align-items-center mb-4">
+    <div class="col-md-7">
+        <h2 class="page-title text-navy"><i class="bi bi-gear text-primary me-2"></i> System Configuration &amp; Architecture</h2>
+        <p class="page-subtitle">Security parameters, single-admin verification, and database connectivity.</p>
+    </div>
+</div>
+
+<div class="row g-4">
+    <!-- Single Admin Security Rule Card -->
+    <div class="col-md-6">
+        <div class="card shadow-sm border h-100">
+            <div class="card-header bg-white fw-bold">
+                <i class="bi bi-shield-check text-success me-1"></i> Strict Single-Admin Security Rule
+            </div>
+            <div class="card-body">
+                <div class="alert alert-success d-flex align-items-center mb-3">
+                    <i class="bi bi-check-circle-fill fs-3 me-3 text-success"></i>
+                    <div>
+                        <strong>Single-Admin Rule Enforced</strong>
+                        <div class="small">The database models and application layer strictly reject any attempt to create a second Admin.</div>
+                    </div>
+                </div>
+
+                <table class="table table-borderless small mb-0">
+                    <tr>
+                        <th class="text-muted" style="width: 40%;">Primary Administrator:</th>
+                        <td class="fw-bold text-dark">{{ admin_user.username }} ({{ admin_user.email }})</td>
+                    </tr>
+                    <tr>
+                        <th class="text-muted">Account Role:</th>
+                        <td><span class="badge bg-danger">SYSTEM ADMIN</span></td>
+                    </tr>
+                    <tr>
+                        <th class="text-muted">Staff / Superuser:</th>
+                        <td><i class="bi bi-check-lg text-success"></i> Enabled</td>
+                    </tr>
+                    <tr>
+                        <th class="text-muted">Public Registration:</th>
+                        <td><i class="bi bi-x-circle text-danger"></i> Disabled (Admins cannot self-register)</td>
+                    </tr>
+                </table>
+            </div>
+        </div>
+    </div>
+
+    <!-- Database & Environment Card -->
+    <div class="col-md-6">
+        <div class="card shadow-sm border h-100">
+            <div class="card-header bg-white fw-bold">
+                <i class="bi bi-database-check text-primary me-1"></i> Database &amp; Runtime Specifications
+            </div>
+            <div class="card-body">
+                <table class="table table-borderless small mb-3">
+                    <tr>
+                        <th class="text-muted" style="width: 40%;">Target Production DB:</th>
+                        <td><strong>MySQL (ev_charging_db)</strong></td>
+                    </tr>
+                    <tr>
+                        <th class="text-muted">MySQL Driver:</th>
+                        <td><code>PyMySQL (install_as_MySQLdb)</code></td>
+                    </tr>
+                    <tr>
+                        <th class="text-muted">Default Host &amp; Port:</th>
+                        <td><code>localhost:3306</code></td>
+                    </tr>
+                    <tr>
+                        <th class="text-muted">Server Datetime:</th>
+                        <td>{{ server_time|date:"Y-m-d H:i:s T" }}</td>
+                    </tr>
+                    <tr>
+                        <th class="text-muted">Timezone:</th>
+                        <td><code>Asia/Kolkata (IST)</code></td>
+                    </tr>
+                </table>
+
+                <div class="p-3 bg-light rounded border small text-muted">
+                    <i class="bi bi-info-circle text-primary me-1"></i>
+                    To run on standard local MySQL, create database with: <code>CREATE DATABASE ev_charging_db;</code> and start your MySQL/XAMPP service.
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Future Scope Card -->
+    <div class="col-12">
+        <div class="card shadow-sm border">
+            <div class="card-header bg-white fw-bold">
+                <i class="bi bi-rocket-takeoff text-primary me-1"></i> MCA Academic Viva &amp; Future Enhancements
+            </div>
+            <div class="card-body">
+                <div class="row g-3">
+                    <div class="col-md-4">
+                        <div class="p-3 bg-light rounded border h-100">
+                            <h6 class="fw-bold text-navy mb-1"><i class="bi bi-cpu text-primary me-1"></i> ML-Based Demand Prediction</h6>
+                            <p class="small text-muted mb-0">Future integration with LSTM or XGBoost models to forecast hourly charging station demand and recommend off-peak slots to users.</p>
+                        </div>
+                    </div>
+                    <div class="col-md-4">
+                        <div class="p-3 bg-light rounded border h-100">
+                            <h6 class="fw-bold text-navy mb-1"><i class="bi bi-plug text-success me-1"></i> OCPP 2.0.1 Hardware Protocol</h6>
+                            <p class="small text-muted mb-0">Hardware-level integration with actual commercial EVSE (Electric Vehicle Supply Equipment) chargers via Open Charge Point Protocol.</p>
+                        </div>
+                    </div>
+                    <div class="col-md-4">
+                        <div class="p-3 bg-light rounded border h-100">
+                            <h6 class="fw-bold text-navy mb-1"><i class="bi bi-credit-card text-warning me-1"></i> Dynamic Pricing &amp; Gateways</h6>
+                            <p class="small text-muted mb-0">Integration with Razorpay / Stripe for automatic kWh-based billing and dynamic surge pricing during peak electrical grid load.</p>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

@@ -1,0 +1,107 @@
+{% extends 'base.html' %}
+
+{% block title %}Station Bookings - Smart EVCharge{% endblock %}
+
+{% block content %}
+<div class="row align-items-center mb-4">
+    <div class="col-md-7">
+        <h2 class="page-title text-navy"><i class="bi bi-calendar-check text-success me-2"></i> Station Reservations</h2>
+        <p class="page-subtitle">{{ station.name }} &bull; Monitor arriving EV drivers and booking intervals.</p>
+    </div>
+    <div class="col-md-5 text-md-end">
+        <a href="{% url 'operator_verify_qr' %}" class="btn btn-navy">
+            <i class="bi bi-qr-code-scan me-1"></i> Scan Booking QR
+        </a>
+    </div>
+</div>
+
+<!-- Filters Bar -->
+<div class="card shadow-sm border mb-4">
+    <div class="card-body p-3">
+        <form method="get" class="row g-2 align-items-center">
+            <div class="col-md-5">
+                <input type="date" name="date" class="form-control" value="{{ selected_date }}" placeholder="Filter by date">
+            </div>
+            <div class="col-md-4">
+                <select name="status" class="form-select">
+                    <option value="">-- All Statuses --</option>
+                    <option value="CONFIRMED" {% if selected_status == 'CONFIRMED' %}selected{% endif %}>Confirmed</option>
+                    <option value="CHARGING" {% if selected_status == 'CHARGING' %}selected{% endif %}>Charging (In Progress)</option>
+                    <option value="COMPLETED" {% if selected_status == 'COMPLETED' %}selected{% endif %}>Completed</option>
+                    <option value="CANCELLED" {% if selected_status == 'CANCELLED' %}selected{% endif %}>Cancelled</option>
+                </select>
+            </div>
+            <div class="col-md-3 d-grid">
+                <button type="submit" class="btn btn-ev-primary">Filter Bookings</button>
+            </div>
+        </form>
+    </div>
+</div>
+
+<!-- Bookings Table -->
+<div class="card shadow-sm border">
+    <div class="card-body p-0">
+        <div class="table-responsive">
+            <table class="table table-hover mb-0">
+                <thead>
+                    <tr>
+                        <th>Booking ID</th>
+                        <th>Slot / Point</th>
+                        <th>Driver Name</th>
+                        <th>EV Vehicle</th>
+                        <th>Date &amp; Time</th>
+                        <th>Duration</th>
+                        <th>Status</th>
+                        <th>Actions</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for b in bookings %}
+                        <tr>
+                            <td class="fw-bold text-navy">#{{ b.booking_id }}</td>
+                            <td>
+                                <div>{{ b.charging_point.point_number }}</div>
+                                <span class="badge bg-light text-dark border small">{{ b.charging_point.get_connector_type_display }}</span>
+                            </td>
+                            <td>
+                                <div>{{ b.user.get_full_name|default:b.user.username }}</div>
+                                <div class="small text-muted">{{ b.user.phone|default:b.user.email }}</div>
+                            </td>
+                            <td>{{ b.vehicle.model }} ({{ b.vehicle.vehicle_number }})</td>
+                            <td>
+                                <div class="fw-semibold">{{ b.date }}</div>
+                                <div class="small text-muted">{{ b.start_time|time:"h:i A" }} - {{ b.end_time|time:"h:i A" }}</div>
+                            </td>
+                            <td>{{ b.duration_minutes }} Mins</td>
+                            <td>
+                                <span class="badge {% if b.status == 'CONFIRMED' %}badge-reserved{% elif b.status == 'CHARGING' %}badge-charging{% elif b.status == 'COMPLETED' %}badge-available{% else %}badge-out-of-service{% endif %}">
+                                    {{ b.get_status_display }}
+                                </span>
+                            </td>
+                            <td>
+                                {% if b.status == 'CONFIRMED' %}
+                                    <a href="{% url 'operator_start_charging' b.id %}" class="btn btn-sm btn-success py-1 px-2" title="Start Charging Session">
+                                        <i class="bi bi-play-fill"></i> Start Charging
+                                    </a>
+                                {% elif b.status == 'CHARGING' and b.charging_session %}
+                                    <a href="{% url 'operator_end_charging' b.charging_session.id %}" class="btn btn-sm btn-outline-danger py-1 px-2" title="End Charging Session">
+                                        <i class="bi bi-stop-fill"></i> End Charging
+                                    </a>
+                                {% else %}
+                                    <span class="text-muted small">&mdash;</span>
+                                {% endif %}
+                            </td>
+                        </tr>
+                    {% empty %}
+                        <tr>
+                            <td colspan="8" class="text-center py-4 text-muted">
+                                No reservations found for the selected filters.
+                            </td>
+                        </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+    </div>
+</div>
+{% endblock %}

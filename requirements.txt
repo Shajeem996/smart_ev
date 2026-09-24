@@ -1,0 +1,6 @@
+Django>=5.0,<6.0
+djangorestframework>=3.14.0
+qrcode>=7.4.2
+Pillow>=10.0.0
+PyMySQL>=1.1.0
+python-dotenv>=1.0.0
